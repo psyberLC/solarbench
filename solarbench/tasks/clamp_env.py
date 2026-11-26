@@ -31,11 +31,11 @@ from solarbench import wire
 from solarbench.agents import prompts
 from solarbench.eval.splits import episode_draws
 from solarbench.specs.params import BOLT
-from solarbench.tasks import channels
+from solarbench.tasks import actions, channels
 from solarbench.tasks.bolt import BoltParams, bolt_friction
 
 if TYPE_CHECKING:
-    from .clamp_env_cfg import ClampEnvCfg
+    from .clamp_env_cfg import ClampEnvCfg, ClampPoseEnvCfg
 
 STAGES = {"tighten": ("engaged", "snug", "in_spec", "released"),
           "loosen": ("engaged", "broken_away", "backed_off", "released")}
@@ -390,3 +390,55 @@ class ClampEnv(DirectRLEnv):
         p, q_ = self.tcp_pose_b()
         self.tgt_pos_b[env_ids], self.tgt_quat_b[env_ids] = p[env_ids], q_[env_ids]
         self.arm_q_des[env_ids] = self.robot.data.default_joint_pos.torch[env_ids][:, self.arm_ids]
+
+
+class ClampPoseEnv(ClampEnv):
+    """Profile R2 on the bolt (docs/interface.md, section 4): the policy sends one ``TOOL_POSE`` or ``DONE`` record
+    at a time and is woken when the last one has ended. A pose runs as R1 steps through the same IK, under the same
+    rate, joint and torque limits (solarbench/tasks/actions.py). Physics, scoring and the work order are R1's."""
+
+    cfg: ClampPoseEnvCfg
+
+    def __init__(self, cfg: ClampPoseEnvCfg, render_mode: str | None = None, **kwargs):
+        super().__init__(cfg, render_mode, **kwargs)
+        ticks = lambda seconds: round(seconds / self.step_dt)  # noqa: E731
+        self.poses = actions.PoseQueue(self.num_envs, self.device, actions.PoseLimits(
+            max_step=cfg.max_tcp_step, max_rot_step=cfg.max_rot_step, timeout=ticks(cfg.pose_timeout_s),
+            pos_tol=cfg.pose_pos_tol, rot_tol=cfg.pose_rot_tol, stall_ticks=ticks(cfg.pose_stall_s),
+            stall_pos=cfg.pose_stall_pos, stall_rot=cfg.pose_stall_rot))
+        self._report_force = False
+
+    @property
+    def catalogue(self) -> dict:
+        c = self.cfg
+        return channels.catalogue(self.spec.id, round(1 / self.step_dt), [wire.TOOL_POSE, wire.DONE], ["idle"], [
+            channels.proprio_channel(c.arm_joints, self.arm_limits, self.arm_vel_limits),
+            channels.wrench_channel(c.wrench_force_range, c.wrench_torque_range), actions.completions_channel(),
+            channels.policy_channel(c.observation_space)])
+
+    def select(self, names) -> None:
+        """The channels the policy selected (the SELECT message). A completion reports the force at the end of a
+        pose only to a policy that selected the wrench channel."""
+        self._report_force = "wrench" in names
+
+    def _pre_physics_step(self, records: torch.Tensor) -> None:
+        self.poses.submit(records, self.episode_length_buf)
+        super()._pre_physics_step(self.poses.step(self.tgt_pos_b, self.tgt_quat_b))
+
+    def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
+        done, time_out = super()._get_dones()
+        return done | self.poses.done, time_out  # DONE ends the episode; without success it is a failure
+
+    def _get_observations(self) -> dict:
+        obs = super()._get_observations()
+        tick, wrench = self.episode_length_buf, obs["wrench"]
+        sensed = (wrench[:, :3].norm(dim=-1), wrench[:, 5]) if self._report_force else ()
+        self.poses.update(tick, *self.tcp_pose_b(), *sensed)
+        tick = tick.int()
+        obs["clock"] = torch.stack([tick, wire.FIRST * (tick == 0).int() + wire.AWAKE * self.poses.idle.int()], -1)
+        obs["completions"] = self.poses.completions
+        return obs
+
+    def _reset_idx(self, env_ids: Sequence[int] | None) -> None:
+        super()._reset_idx(env_ids)
+        self.poses.reset(torch.arange(self.num_envs, device=self.device) if env_ids is None else env_ids)
