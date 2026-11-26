@@ -34,6 +34,7 @@ from typing import Protocol, runtime_checkable
 
 import torch
 
+from solarbench import wire
 from solarbench.wire import Layout
 
 
@@ -111,23 +112,35 @@ class ZeroPolicy:
 
 
 class OraclePolicy:
-    """Scripted controller that reads exact simulator state: the ceiling for a robot, not a contestant."""
+    """Scripted controller that reads exact simulator state: the ceiling for a robot, not a contestant.
+
+    On a task that does not take R1 steps (profile R2), each step it would take is sent as a ``TOOL_POSE`` record
+    naming where that step puts the tool, with a one-tick timeout: its trajectory as waypoints, one per tick.
+    """
 
     name = "oracle"
 
     def __init__(self, catalogue: dict):
         self.selection, self._task = select(catalogue, "policy"), catalogue["task"]
+        self._r1 = wire.TOOL_DELTA in catalogue["opcodes"]
 
     def attach(self, env):
         from solarbench.oracle import make_oracle
 
-        self._oracle = make_oracle(self._task, env)
+        self._env, self._oracle = env, make_oracle(self._task, env)
 
     def reset(self, env_ids, work_orders):
         self._oracle.reset(env_ids)
 
     def act(self, obs):
-        return self._oracle.act()
+        step = self._oracle.act()
+        if self._r1:
+            return step
+        from solarbench.tasks.actions import pose_records, r1_target
+
+        e, tick = self._env, obs["clock"][:, 0]
+        target = r1_target(e.tgt_pos_b, e.tgt_quat_b, step, e.cfg.max_tcp_step, e.cfg.max_rot_step)
+        return pose_records(*target, ids=tick + 1, based_on=tick, timeout=1)
 
 
 class JitPolicy:

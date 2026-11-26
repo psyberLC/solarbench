@@ -28,3 +28,11 @@ for _mode, _cfg in (("Tighten", "ClampEnvCfg"), ("Loosen", "ClampLoosenEnvCfg"))
             "default_agent": "rsl_rl",
         },
     )
+
+# profile R2 (docs/interface.md, section 4): one tool pose per command, the same physics and scoring as R1
+gym.register(
+    id="SolarBench-T3-ClampTighten-UR16e-R2-v0",
+    entry_point=f"{__name__}.clamp_env:ClampPoseEnv",
+    disable_env_checker=True,
+    kwargs={"env_cfg_entry_point": f"{__name__}.clamp_env_cfg:ClampPoseEnvCfg"},
+)

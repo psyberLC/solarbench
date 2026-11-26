@@ -31,6 +31,14 @@ Tighten a module end-clamp bolt into the manufacturer's torque window, or break 
 - **Physics.** The bolt is a revolute joint whose dry friction follows a torque–angle model: running torque, clamp-up stiffness, breakaway when loosening. The bolt turns only if the socket, seated on the hex flats, transmits enough torque through contact. Bolt parameters are resampled every episode. See ASSUMPTIONS P7, P21–P24, M8–M11.
 - **Known gaps.** The wrist turns the bolt directly; there is no powered tool with its own torque transducer. The drive torque the policy sees is reconstructed from the wrist-3 controller and stops tracking the bolt torque when socket contact chatters (M11). Base pose and clamp position are fixed. On PhysX the oracle succeeds less often than on Newton ([results](../results/RESULTS.md)), failing at socket seating or before the turn is complete.
 
+## Bolt, one pose per command: `SolarBench-T3-ClampTighten-UR16e-R2-v0`
+The tightening task above under profile R2 of the [interface](interface.md): the action a reasoning model emits. Body, stages, success, damage, physics and work order are the same as the `-v0` task's.
+
+- **Action (R2).** One `TOOL_POSE` record at a time (target tool pose in the base frame, quaternion `xyzw`) or `DONE`. The policy is woken when its last command has ended. A pose runs as R1 steps (at most 6 mm and 0.05 rad per tick) through the same IK, joint limits and torque limits ([`solarbench/tasks/actions.py`](../solarbench/tasks/actions.py)). It ends as arrived, stalled or timed out (ASSUMPTIONS M13), and its completion record gives the remaining position and rotation error. The record adds the force magnitude and the torque about the tool axis at the end only if the policy selected `wrench`. `DONE` ends the episode, and without success that is a failure.
+- **Catalogue.** `clock`, `proprio`, `wrench`, `completions` (the last 4 records), and the privileged `policy` vector for the oracle.
+- **Oracle.** The `-v0` oracle, its step each tick sent as a one-tick `TOOL_POSE` record to where that step puts the tool. On the dev split (8 episodes, Newton, RTX 4060 Laptop) it scored 8/8 safe success, with installed torques within 0.04 N·m of the `-v0` oracle's on the same episodes. The zero policy scored 0/8. These runs are on the fork that added this task and are not in `results/`.
+- **Known gaps.** Only tightening has an R2 id. One command at a time (`max_depth` 1). The completion rules are controller choices, not the UR controller's.
+
 ## Protocol common to all tasks
 - **Splits.** `dev` seeds for development; `test` seeds are held out, and only `test` results enter tables ([`solarbench/eval/splits.py`](../solarbench/eval/splits.py)).
 - **Statistics.** Every rate carries a 95% Wilson interval; continuous measures a bootstrap interval. Episodes with a simulator error are excluded and counted separately.

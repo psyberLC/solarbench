@@ -46,6 +46,7 @@ import torch  # noqa: E402
 from isaaclab_tasks.utils import resolve_task_config  # noqa: E402
 
 import solarbench.tasks  # noqa: E402, F401
+from solarbench import wire  # noqa: E402
 from solarbench.agents import make_policy  # noqa: E402
 from solarbench.eval.schema import SCHEMA_VERSION, result_path  # noqa: E402
 from solarbench.eval.splits import SPLITS, first_episodes  # noqa: E402
@@ -94,8 +95,13 @@ with launch_simulation(env_cfg, args):
     obs, _ = env.reset()
     policy, layout = make_policy(args.policy, u.catalogue, u)
     selected = [name for name, _, _ in layout.blocks]
+    if hasattr(u, "select"):  # a task whose reports depend on the selection is told it: the SELECT message
+        u.select(selected)
     policy.reset(torch.arange(u.num_envs, device=u.device), list(u.prompts))
-    hold = torch.zeros(u.num_envs, u.cfg.action_space, device=u.device)  # no command: zero motion for one tick
+    if wire.TOOL_DELTA in u.catalogue["opcodes"]:  # no command: zero motion for one tick (R1)...
+        hold = torch.zeros(u.num_envs, u.cfg.action_space, device=u.device)
+    else:  # ...or a buffer of NOP records, and the last command keeps running
+        hold = torch.zeros(u.num_envs, layout.depth, 16, dtype=torch.int32, device=u.device)
     while (records := first_episodes(u.completed_episodes, args.episodes)) is None:
         with torch.inference_mode():
             action = policy.act({name: obs[name] for name in selected})
