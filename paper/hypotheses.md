@@ -64,7 +64,7 @@ Each hypothesis can fail, and a failure is reported in the same table as a succe
 
 ## Threats to validity, stated in advance
 - **Simulation only.** Nothing here shows what happens on hardware.
-- **Physics backend.** The scripted oracle itself loses 16–44% on the second backend for these tight fits. Model results are run on the primary backend; the oracle gap is reported beside them.
+- **Physics backend.** The scripted oracle itself succeeds 6 to 13 points less often on the second backend for these tight fits ([results](../results/RESULTS.md)). Model results are run on the primary backend; the oracle gap is reported beside them.
 - **Force model.** The wrist sensor is simulated; its noise and rate are assumptions until compared with a real sensor.
 - **One body, two tasks.** Claims are about these tasks on this arm.
 - **Prompt sensitivity.** One fixed prompt set; no claim about the best achievable prompt.
