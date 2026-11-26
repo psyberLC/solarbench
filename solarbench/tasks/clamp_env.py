@@ -9,6 +9,7 @@ Torque is measured at the UR16e wrist-3 joint (the socket's drive axis), like a 
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -26,12 +27,15 @@ from isaaclab.utils.math import (
     subtract_frame_transforms,
 )
 
+from solarbench import wire
+from solarbench.agents import prompts
 from solarbench.eval.splits import episode_draws
 from solarbench.specs.params import BOLT
+from solarbench.tasks import actions, channels
 from solarbench.tasks.bolt import BoltParams, bolt_friction
 
 if TYPE_CHECKING:
-    from .clamp_env_cfg import ClampEnvCfg
+    from .clamp_env_cfg import ClampEnvCfg, ClampPoseEnvCfg
 
 STAGES = {"tighten": ("engaged", "snug", "in_spec", "released"),
           "loosen": ("engaged", "broken_away", "backed_off", "released")}
@@ -93,6 +97,24 @@ class ClampEnv(DirectRLEnv):
         self.episode_index = torch.zeros(n, dtype=torch.long, device=dev)
         self._episodes_started = 0
         self.completed_episodes: list[dict] = []
+        # wrist force-torque sensor (ASSUMPTIONS M12): the reaction wrench at the joint that holds the tool
+        self.flange = self.scene["flange"]
+        self._flange_joint = self.flange.body_names.index(cfg.tool_body)
+        self._tool_mass = float(self.robot.data.body_mass.torch[0, self.tool_idx])
+        self._tool_com = self.robot.data.body_com_pos_b.torch[0, self.tool_idx].clone()
+        self._reaction_sum = torch.zeros(n, 6, device=dev)
+        self._untouched = torch.ones(n, dtype=torch.bool, device=dev)  # no physics step yet in this episode
+        self._wrench_noise = torch.zeros(n, self.max_episode_length, 6, device=dev)
+        self.prompts = [""] * n  # the work order of the episode each environment is running
+
+    @property
+    def catalogue(self) -> dict:
+        """What this task offers a policy (docs/interface.md, section 2)."""
+        c = self.cfg
+        return channels.catalogue(self.spec.id, round(1 / self.step_dt), [wire.TOOL_DELTA], ["tick"], [
+            channels.proprio_channel(c.arm_joints, self.arm_limits, self.arm_vel_limits),
+            channels.wrench_channel(c.wrench_force_range, c.wrench_torque_range),
+            channels.policy_channel(c.observation_space)])
 
     # ------------------------------------------------------------------ frames
     def _root(self):
@@ -178,6 +200,9 @@ class ClampEnv(DirectRLEnv):
         g = self.robot.data.gravity_compensation_forces.torch[:, self.robot.num_base_dofs:]
         tc.set_effort_index(value=g[:, self.arm_ids], joint_ids=self.arm_ids)
         self._measure()
+        flange = self.flange.data
+        self._reaction_sum += torch.cat([flange.force.torch[:, self._flange_joint],
+                                         flange.torque.torch[:, self._flange_joint]], dim=-1)
         # Bolt resistance as scheduled dry joint friction (implicit in the solver): the bolt turns only when the
         # socket applies more than the installed-torque requirement, and the wrist feels the reaction.
         fric = bolt_friction(self.bp, self.theta, self.cfg.mode == "loosen")
@@ -198,7 +223,24 @@ class ClampEnv(DirectRLEnv):
         obs = torch.cat([jp, 0.1 * jv, tcp_p, tcp_q, head_b - tcp_p, quat_apply_inverse(rq, z_b),
                          self.theta[:, None], (self.bp.tau_req(self.theta) / 16.0)[:, None],
                          (self.tau / 20.0)[:, None], self.engaged[:, None].float(), self.actions], dim=-1)
-        return {"policy": torch.nan_to_num(obs).clamp(-20.0, 20.0)}
+        return {"policy": torch.nan_to_num(obs).clamp(-20.0, 20.0), "clock": channels.clock(self.episode_length_buf),
+                "proprio": channels.proprio(jp, jv, tcp_p, tcp_q), "wrench": self._wrench()}
+
+    def _wrench(self) -> torch.Tensor:
+        """Force and torque the surroundings apply to the tool, at the flange and in the tool frame: the mean of the
+        sensor over the control tick, the tool's weight taken out, then noise and the sensor's range."""
+        c, n = self.cfg, self.num_envs
+        tool_quat = self.robot.data.body_pose_w.torch[:, self.tool_idx, 3:]
+        gravity = quat_apply_inverse(tool_quat, torch.tensor(c.sim.gravity, device=self.device).expand(n, 3))
+        sensed = channels.external_wrench(self._reaction_sum / c.decimation, gravity, self._tool_mass, self._tool_com)
+        sensed[self._untouched] = 0.0
+        self._reaction_sum[:] = 0.0
+        self._untouched[:] = False
+        tick = self.episode_length_buf.clamp(max=self.max_episode_length - 1)
+        noise = self._wrench_noise[torch.arange(n, device=self.device), tick]
+        sigma = torch.tensor([c.wrench_force_noise] * 3 + [c.wrench_torque_noise] * 3, device=self.device)
+        limit = torch.tensor([c.wrench_force_range] * 3 + [c.wrench_torque_range] * 3, device=self.device)
+        return torch.nan_to_num(sensed + sigma * noise).clamp(-limit, limit)
 
     def _stage_conditions(self) -> list[torch.Tensor]:
         reached = self.stage_time >= 0
@@ -273,8 +315,30 @@ class ClampEnv(DirectRLEnv):
         """Give the episodes starting now their indices; return their draws (eval/splits.py), one row each."""
         first, self._episodes_started = self._episodes_started, self._episodes_started + len(env_ids)
         self.episode_index[env_ids] = torch.arange(first, self._episodes_started, device=self.device)
-        draws = episode_draws(self.cfg.seed or 0, range(first, self._episodes_started), 12)
-        return torch.as_tensor(draws, dtype=torch.float32, device=self.device)
+        ticks = self.max_episode_length
+        draws = episode_draws(self.cfg.seed or 0, range(first, self._episodes_started), 12 + 6 * ticks)
+        # sensor noise for every tick of the episode, standard normal, from the draws after the first twelve
+        normal = 2**0.5 * torch.erfinv(2 * torch.as_tensor(draws[:, 12:]).clamp(1e-12, 1 - 1e-12) - 1)
+        self._wrench_noise[env_ids] = normal.reshape(-1, ticks, 6).to(self.device, torch.float32)
+        return torch.as_tensor(draws[:, :12], dtype=torch.float32, device=self.device)
+
+    def _work_orders(self, env_ids: torch.Tensor) -> None:
+        """Write the work order of the episodes starting now, with this task's own thresholds and site."""
+        c = self.cfg
+        rp, rq = self._root()
+        head_w, axis_w = self.head_top_w()
+        head, axis = quat_apply_inverse(rq, head_w - rp).tolist(), quat_apply_inverse(rq, axis_w).tolist()
+        loose = [-math.degrees(angle) for angle in c.start_theta_tighten_range]
+        values = dict(
+            loose_min_deg=min(loose), loose_max_deg=max(loose), installed_min=c.tau_install_range[0],
+            installed_max=c.tau_install_range[1], engage_depth_mm=1e3 * c.engage_depth,
+            engage_lateral_mm=1e3 * c.engage_lateral, engage_angle_deg=c.engage_angle_deg, torque_min=c.tau_spec_min,
+            torque_max=c.tau_spec_max, backoff_turns=c.backoff_angle / (2 * math.pi),
+            released_mm=1e3 * c.released_distance, time_limit_s=c.episode_length_s)
+        for e in env_ids.tolist():
+            names = ("head_x", "head_y", "head_z", "axis_x", "axis_y", "axis_z")
+            site = dict(zip(names, head[e] + axis[e], strict=True))
+            self.prompts[e] = prompts.work_order(self.spec.id, **values, **site)
 
     def _sample_episode(self, env_ids: torch.Tensor, u: torch.Tensor) -> None:
         """Per-episode bolt variation within the assumed ranges (installed torque, stack stiffness, thread friction).
@@ -314,6 +378,9 @@ class ClampEnv(DirectRLEnv):
         self.clamp.write_joint_velocity_to_sim_index(velocity=torch.zeros_like(qc), env_ids=env_ids)
         self.theta_ref[env_ids] = self.theta0[env_ids]
         self.theta[env_ids] = self.theta0[env_ids]
+        self._reaction_sum[env_ids] = 0.0
+        self._untouched[env_ids] = True
+        self._work_orders(env_ids)
         for buf, v in ((self.stage_time, -1.0), (self.peak_tau, 0.0), (self.vel_violation_steps, 0.0),
                        (self.actions, 0.0), (self.prev_actions, 0.0)):
             buf[env_ids] = v
@@ -323,3 +390,55 @@ class ClampEnv(DirectRLEnv):
         p, q_ = self.tcp_pose_b()
         self.tgt_pos_b[env_ids], self.tgt_quat_b[env_ids] = p[env_ids], q_[env_ids]
         self.arm_q_des[env_ids] = self.robot.data.default_joint_pos.torch[env_ids][:, self.arm_ids]
+
+
+class ClampPoseEnv(ClampEnv):
+    """Profile R2 on the bolt (docs/interface.md, section 4): the policy sends one ``TOOL_POSE`` or ``DONE`` record
+    at a time and is woken when the last one has ended. A pose runs as R1 steps through the same IK, under the same
+    rate, joint and torque limits (solarbench/tasks/actions.py). Physics, scoring and the work order are R1's."""
+
+    cfg: ClampPoseEnvCfg
+
+    def __init__(self, cfg: ClampPoseEnvCfg, render_mode: str | None = None, **kwargs):
+        super().__init__(cfg, render_mode, **kwargs)
+        ticks = lambda seconds: round(seconds / self.step_dt)  # noqa: E731
+        self.poses = actions.PoseQueue(self.num_envs, self.device, actions.PoseLimits(
+            max_step=cfg.max_tcp_step, max_rot_step=cfg.max_rot_step, timeout=ticks(cfg.pose_timeout_s),
+            pos_tol=cfg.pose_pos_tol, rot_tol=cfg.pose_rot_tol, stall_ticks=ticks(cfg.pose_stall_s),
+            stall_pos=cfg.pose_stall_pos, stall_rot=cfg.pose_stall_rot))
+        self._report_force = False
+
+    @property
+    def catalogue(self) -> dict:
+        c = self.cfg
+        return channels.catalogue(self.spec.id, round(1 / self.step_dt), [wire.TOOL_POSE, wire.DONE], ["idle"], [
+            channels.proprio_channel(c.arm_joints, self.arm_limits, self.arm_vel_limits),
+            channels.wrench_channel(c.wrench_force_range, c.wrench_torque_range), actions.completions_channel(),
+            channels.policy_channel(c.observation_space)])
+
+    def select(self, names) -> None:
+        """The channels the policy selected (the SELECT message). A completion reports the force at the end of a
+        pose only to a policy that selected the wrench channel."""
+        self._report_force = "wrench" in names
+
+    def _pre_physics_step(self, records: torch.Tensor) -> None:
+        self.poses.submit(records, self.episode_length_buf)
+        super()._pre_physics_step(self.poses.step(self.tgt_pos_b, self.tgt_quat_b))
+
+    def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
+        done, time_out = super()._get_dones()
+        return done | self.poses.done, time_out  # DONE ends the episode; without success it is a failure
+
+    def _get_observations(self) -> dict:
+        obs = super()._get_observations()
+        tick, wrench = self.episode_length_buf, obs["wrench"]
+        sensed = (wrench[:, :3].norm(dim=-1), wrench[:, 5]) if self._report_force else ()
+        self.poses.update(tick, *self.tcp_pose_b(), *sensed)
+        tick = tick.int()
+        obs["clock"] = torch.stack([tick, wire.FIRST * (tick == 0).int() + wire.AWAKE * self.poses.idle.int()], -1)
+        obs["completions"] = self.poses.completions
+        return obs
+
+    def _reset_idx(self, env_ids: Sequence[int] | None) -> None:
+        super()._reset_idx(env_ids)
+        self.poses.reset(torch.arange(self.num_envs, device=self.device) if env_ids is None else env_ids)
