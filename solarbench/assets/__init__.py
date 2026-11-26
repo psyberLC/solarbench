@@ -1,0 +1,1 @@
+"""Procedural OpenUSD asset authoring."""

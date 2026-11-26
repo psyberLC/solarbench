@@ -1,0 +1,19 @@
+name: check
+on:
+  pull_request:
+  push:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # The simulator stack is about 8 GB and needs a GPU; these checks need only the light dependencies.
+      - run: pip install ruff pytest pyyaml gymnasium numpy scipy torch --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+      - run: PYTHON=python PYTHONPATH=. tools/check.sh
+      - if: github.event_name == 'pull_request'
+        run: python tools/board.py diff --base "origin/${{ github.base_ref }}"

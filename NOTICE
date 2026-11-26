@@ -1,0 +1,18 @@
+SolarBench
+Copyright 2026 Carlo Pecora and Radiant Robotics
+
+Code (everything under solarbench/, scripts/, tools/ and tests/) is licensed under the
+Apache License, Version 2.0. See LICENSE.
+
+Assets, data, results and documents (assets/, atlas/, results/, paper/, docs/, board/ and the
+Markdown files at the top level) are licensed under the Creative Commons Attribution 4.0
+International licence. See LICENSE-CC-BY-4.0. Per-asset sources are listed in assets/LICENSES.md.
+
+Third-party material
+- Robot models (Unitree G1, Universal Robots UR16e) are not included. They are downloaded at run
+  time from NVIDIA's Isaac asset server and remain under the terms published there.
+- The optional physics and rendering backends installed by the "ovphysx" and "ovrtx" extras are
+  proprietary NVIDIA software under NVIDIA's own licences. They are not part of this work.
+
+Names of products and manufacturers are used only to identify the datasheets and standards the
+models are built from. No affiliation with, or endorsement by, any manufacturer is implied.

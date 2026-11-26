@@ -1,0 +1,108 @@
+id,subsystem,task,group,frequency,tools,primitives,hazards,energised_or_isolation,source
+T001,Modules,"Walk rows and check modules for cracks, discoloration, damage; log serials for warranty",inspection/check,Annual,"none (walk, visual)",navigate;visual-read,"Trips, uneven ground; DC on damaged modules",Energised (strings live in daylight),NREL-73822 App B
+T002,Modules,Infrared hot-spot scan of modules/strings (bypass-diode failure),inspection/check,Annual,IR camera,navigate;thermal-image,DC shock/arc near energised strings,Energised,NREL-73822 App B; sec 9.1
+T003,Modules,Aerial IR survey of array to find failed strings/modules/cells,inspection/check,Not stated (condition),UAV with IR camera,uav-flight;thermal-image,Airspace; none on ground,Energised,NREL-73822 sec 9.1
+T004,Modules,Measure string open-circuit voltage,inspection/check,Annual,multimeter; MC4 tool,navigate;multimeter-probe;plug-unplug-connector,DC shock; arc on disconnect,Energised (Voc present),NREL-73822 App B
+T005,Modules,Module clamp/frame torque check and visual,inspection/check,5 years,torque wrench,navigate;torque-fastener;visual-read,Work at height on tables,No (mechanical),NREL-73822 App B
+T006,Modules,"Replace module failing test, cracked, delaminated or water-ingressed",physical maintenance,As needed,spare module; wrench; MC4 tool,navigate;swap-module;lift-over-20kg;plug-unplug-connector;torque-fastener,DC shock; heavy module; broken glass,Isolation required (string de-energised),NREL-73822 App C
+T007,Modules,Repair module backsheet or frame damage,physical maintenance,As needed,specialist kit,navigate;swap-module;torque-fastener,DC shock; sharp edges,Isolation required,NREL-73822 App C
+T008,Modules,Replace module-to-module MC4 connectors,physical maintenance,As needed,MC4 spanner and pullers,navigate;plug-unplug-connector;torque-fastener,DC arc on unmating under load,Isolation required,NREL-73822 App C
+T009,Modules,Replace MC4 lead from module to combiner box,physical maintenance,As needed,MC4 tools,navigate;plug-unplug-connector,DC arc,Isolation required,NREL-73822 App C
+T010,Modules,"Manual array wash (bucket, strip cleaner, squeegee; no high-pressure water)",physical maintenance,Condition-based or defined interval,bucket; squeegee; brush; water supply,navigate;wipe-brush,Slip; wet energised contacts,Energised (modules live in sun),NREL-73822 sec 5.7.1
+T011,Modules,Snow removal from modules and rows,physical maintenance,Condition-based (seasonal),snow brush or blower,navigate;wipe-brush,Slip; cold; ladders,Energised,NREL-73822 App B (snow cleaning)
+T012,Modules,Dust and pollen removal,physical maintenance,Condition-based,cleaner; brush,navigate;wipe-brush,Slip,Energised,"NREL-73822 App B (dust, pollen cleaning)"
+T013,Modules,Bird-dropping cleaning of array,physical maintenance,Bi-annual,cleaner; brush,navigate;wipe-brush,Slip,Energised,NREL-73822 App B (bird cleaning)
+T014,Modules,Soiling measurement with reference (shutter) sensor to trigger cleaning,inspection/check,Continuous (sensor),soiling sensor pair,visual-read,None,No,NREL-73822 sec 5.7.1
+T015,Mounting structure,"Racking and rail inspection for damage, corrosion, and loose hardware (re-paint if needed)",inspection/check,Annual,visual; paint,navigate;visual-read,Height,No,NREL-73822 App B (corrosion inspection; array inspection)
+T016,Mounting structure,Racking torque check and inspection,inspection/check,5 years,torque wrench,navigate;torque-fastener,Work at height,No,NREL-73822 App B
+T017,Mounting structure,Ballasted (non-penetrating) mount check for abnormal movement,inspection/check,Annual,visual,navigate;visual-read,None,No,NREL-73822 App B
+T018,Mounting structure,Galvanization inspection,inspection/check,Annual,visual,navigate;visual-read,None,No,NREL-73822 App B
+T019,Mounting structure,Replace rack parts damaged by corrosion or impact,physical maintenance,As needed,wrench; replacement parts; lift,navigate;torque-fastener;lift-over-20kg,Heavy parts; height,No,NREL-73822 App C
+T020,Mounting structure,Excavate and replace failed foundation element,physical maintenance,As needed,excavator; crane,dig;lift-over-20kg,Heavy equipment; buried cable strike,Check for buried DC cable first,NREL-73822 App C
+T021,Tracker,Check electrical connections and enclosure of tracking motor/controller,inspection/check,Annual,visual; multimeter,navigate;open-door;visual-read,Shock on power circuits,Isolation/lockout required before opening,NREL-73822 App B; sec 5.6
+T022,Tracker,Check grounding braids for wear,inspection/check,Annual,visual,navigate;visual-read,None,No,NREL-73822 App B
+T023,Tracker,Inclinometer inspection,inspection/check,Annual,visual; level,navigate;visual-read,None,No,NREL-73822 App B
+T024,Tracker,Limit-switch inspection,inspection/check,Annual,visual,navigate;visual-read,None,Isolation for function test,NREL-73822 App B
+T025,Tracker,Module-table inspection,inspection/check,Annual,visual,navigate;visual-read,Pinch points,No,NREL-73822 App B
+T026,Tracker,Tracking controller inspection and functional test,inspection/check,Annual,laptop or HMI,navigate;open-door;press-button;visual-read,LV power; comms,Isolation/lockout for hardware work,NREL-73822 App B; sec 5.6
+T027,Tracker,Replace tracking-controller power-supply fan filter,physical maintenance,As needed,filter,navigate;open-door;replace-filter,LV power,Isolation,NREL-73822 sec 5.6
+T028,Tracker,Driveshaft torque check and visual inspection,inspection/check,Annual,torque wrench,navigate;torque-fastener;visual-read,Rotating drives; pinch,Isolation/lockout (drive off),NREL-73822 App B
+T029,Tracker,Slew-gear torque check and wear inspection,inspection/check,Annual,torque wrench,navigate;torque-fastener;visual-read,Stored energy; pinch,Isolation/lockout,NREL-73822 App B
+T030,Tracker,Block-bolt torque inspection,inspection/check,Annual,torque wrench,navigate;torque-fastener,Height,No,NREL-73822 App B
+T031,Tracker,Screw-jack inspection,inspection/check,Bi-annual,visual,navigate;visual-read,Pinch points,Isolation/lockout,NREL-73822 App B
+T032,Tracker,"Gear, universal-joint and bearing inspection",inspection/check,Annual (or per OEM),visual,navigate;visual-read,Pinch points,Isolation/lockout,NREL-73822 App B
+T033,Tracker,Gearbox lubrication visual check,inspection/check,Per OEM (not stated),visual,navigate;visual-read,Pinch points,Isolation/lockout,NREL-73822 sec 5.6
+T034,Tracker,"Grease screw jack, slew gear, universal joints (zerk fittings), mounting bearings/gimbals",physical maintenance,Per OEM manual (not stated),grease gun,navigate;grease-nipple,Pinch points; drive stored energy,Isolation/lockout,NREL-73822 sec 5.6
+T035,Tracker,"Replace drive shaft, drive bearing or mount bearing",physical maintenance,As needed,mechanic tools; crane,navigate;torque-fastener;lift-over-20kg,Heavy; height; pinch,Isolation/lockout,NREL-73822 App C
+T036,Tracker,Replace tracker motor controller,physical maintenance,As needed,electrician tools,navigate;open-door;plug-unplug-connector;torque-fastener,Power shock,Isolation required,NREL-73822 App C
+T037,Tracker,Replace hydraulic cylinder,physical maintenance,As needed,hydraulic tools,navigate;torque-fastener;lift-over-20kg,Hydraulic pressure,Isolation/lockout,NREL-73822 sec 5.6
+T038,Tracker,Replace tracker backup battery,physical maintenance,Over tracker life (not stated),battery,navigate;open-door;plug-unplug-connector,Battery hazards,Isolation,NREL-73822 sec 5.6
+T039,Tracker,Upgrade tracker control software,desk/remote,As needed,laptop or remote,remote-only,None,No,NREL-73822 App C
+T040,Tracker,Remote tracker diagnostics and maintenance scheduling via OEM platform,desk/remote,Ongoing,remote platform,remote-only,None,No,NREL-73822 sec 5.6
+T041,DC cabling,"Inspect DC cabling for cracks, pulled connections, overheating, arcing, shorts, opens, ground faults",inspection/check,Annual,IR camera; visual,navigate;visual-read;thermal-image,DC arc; shock,Energised,NREL-73822 App B
+T042,DC cabling,Check DC disconnect switch positions,inspection/check,Annual,visual,navigate;visual-read;turn-handle,DC arc if operated under load,Energised (do not operate under load),NREL-73822 App B
+T043,DC cabling,Insulation-resistance check of PV array for ground-fault function,inspection/check,At regular maintenance intervals (not stated),insulation tester,navigate;multimeter-probe,Shock,Isolation required,SMA-SCWA sec 3.x (GFDI note)
+T044,DC cabling,Locate and repair line-to-line or ground faults in DC wiring,physical maintenance,As needed,insulation tester; tools,navigate;multimeter-probe;plug-unplug-connector;torque-fastener,DC arc; shock,Isolation required,NREL-73822 App C
+T045,DC cabling,Locate and dig up direct-buried DC wire; repair,physical maintenance,As needed,locator; excavator,dig,Buried cable strike; shock,Isolation required,NREL-73822 App C
+T046,DC cabling,Re-route or replace broken DC conduit and fittings,physical maintenance,As needed,hand tools,navigate;torque-fastener,Shock if live,Isolation required,NREL-73822 App C
+T047,DC cabling,Seal leaking junction box,physical maintenance,As needed,sealant; hand tools,navigate;open-door,Shock if live,Isolation required,NREL-73822 App C
+T048,Combiner/string boxes,Open each combiner box; check fuses intact and connections tight,inspection/check,Annual,torque tool; IR camera; flashlight,navigate;open-door;thermal-image;torque-fastener,DC arc flash on opening live box,Energised unless isolated (journeyman-level work),NREL-73822 App B
+T049,Combiner/string boxes,"Check box exterior and seals for water ingress, corrosion, intrusion; seal if needed",inspection/check,Annual,visual; sealant,navigate;visual-read,Low,No,NREL-73822 App B
+T050,Combiner/string boxes,IR scan of combiner connections for loose terminals,inspection/check,Annual,IR camera,navigate;thermal-image,DC arc,Energised,NREL-73822 App B
+T051,Combiner/string boxes,Replace blown combiner fuses,physical maintenance,As needed,fuse puller,navigate;open-door;pull-fuse,DC arc,Isolation required,NREL-73822 App C
+T052,Combiner/string boxes,Remove pests and nests from electrical boxes and around array,physical maintenance,Annual,brush; sanitation kit,navigate;open-door;wipe-brush,Pathogens,No,NREL-73822 App B
+T053,Inverter,Read inverter faceplate operating indicators and compare with benchmark,inspection/check,Annual,display,navigate;visual-read,None,No,NREL-73822 App B
+T054,Inverter,Review inverter error memory and data-logger history,desk/remote,At least monthly,laptop or SCADA,remote-only,None,No,SMA-SCWA sec 3.2
+T055,Inverter,Inspect inverter housing/shelter for maintenance needs,inspection/check,Annual,visual,navigate;visual-read,Heat,No,NREL-73822 App B
+T056,Inverter,"Clean or replace air-inlet filter pads (wash, dry, reinstall)",physical maintenance,Per maintenance protocol (interval not fixed),vacuum; water; spare pads,navigate;open-door;replace-filter,Heat; energised cabinet,Isolation (power electronics off and voltage-free),SMA-SCWA sec 3.4
+T057,Inverter,Clean power electronics and cabinet interior,physical maintenance,Per maintenance protocol,brush; compressed air,navigate;open-door;wipe-brush,Shock; burns,"Isolation (switched off, voltage-free)",SMA-SCWA sec 3.3
+T058,Inverter,Functional test of cooling fans and thermostats; clean fans,inspection/check,Per maintenance protocol,brush; thermometer,navigate;open-door;turn-handle;visual-read,Heat; moving parts,Isolation required,SMA-SCWA sec 5.6; sec 3.5
+T059,Inverter,Replace cooling fan motors,physical maintenance,As needed,fan; tools,navigate;open-door;plug-unplug-connector;torque-fastener,Heat; shock,Isolation required,NREL-73822 App C; SMA-snip (10-14 yr)
+T060,Inverter,Inspect fuses and disconnectors; clean and grease blade contacts,physical maintenance,Per maintenance protocol,contact grease; tools,navigate;open-door;pull-fuse;apply-grease,DC arc,Isolation required,SMA-SCWA sec 6.5
+T061,Inverter,"Re-torque current-carrying fasteners (lugs, terminal blocks) and thermal-image connections",physical maintenance,Per OEM manual,torque wrench; IR camera,navigate;open-door;torque-fastener;thermal-image,Shock; arc,Isolation required,NREL-73822 sec 5.2.2; SMA-SCWA sec 2.1.3
+T062,Inverter,Reboot inverter (start/stop) to clear unknown error,physical maintenance,As needed,HMI or remote,press-button,Low,No (remote possible),NREL-73822 App C
+T063,Inverter,Reset arc-fault trip (manual reset),physical maintenance,As needed,HMI,press-button;turn-handle,DC arc risk,Verify DC isolation before reset,NREL-73822 App C
+T064,Inverter,"Replace inverter contactors, control or driver cards, IGBTs, capacitors, fuses (subassembly repair)",physical maintenance,As needed,specialist tools,navigate;open-door;swap-module;torque-fastener;plug-unplug-connector,Stored energy in capacitors; high voltage,Isolation required,NREL-73822 App C
+T065,Inverter,Replace whole string inverter (swap),physical maintenance,As needed,hoist or lift,navigate;lift-over-20kg;plug-unplug-connector;torque-fastener,Heavy; DC/AC shock,Isolation required,NREL-73822 sec 5.2.2
+T066,Inverter,Replace inverter overvoltage surge suppressors,physical maintenance,As needed,tools,navigate;open-door;swap-module,Surge,Isolation required,NREL-73822 App C
+T067,Inverter,Re-install or update inverter control software,desk/remote,As needed,laptop or remote,remote-only,None,No,NREL-73822 App C
+T068,MV transformer,"Visual inspection of transformer, oil and temperature gauges, housing/chamber",inspection/check,Annual,visual,navigate;visual-read,MV; heat; oil,Energised MV (keep clearance; LOTO for hands-on),NREL-73822 App B; SMA-SCWA sec 7.1
+T069,MV transformer,Read magnetic oil gauge (main tank and conservator) daily; check for oil leaks,inspection/check,Daily,gauge; visual,navigate;visual-read,Heat; MV,Energised,XFMR-snip
+T070,MV transformer,Check oil level in breather cup and top up to mark,physical maintenance,Monthly,oil; funnel,navigate;visual-read;top-up-fluid,MV; heat,Energised,XFMR-snip
+T071,MV transformer,Check silica-gel colour; replace desiccant when over half changed,physical maintenance,Monthly check; replace as needed,replacement desiccant,navigate;visual-read;replace-filter,MV,Energised,XFMR-snip
+T072,MV transformer,Clean breather air holes,physical maintenance,Monthly,brush,navigate;wipe-brush,MV,Energised,XFMR-snip
+T073,MV transformer,"Check Buchholz relay is full, gas alarm works; check pressure-relief device",inspection/check,Annual,test button; visual,navigate;press-button;visual-read,Oil under pressure; MV,Isolation/lockout,XFMR-snip
+T074,MV transformer,Check dry transformer and sine filter connections; grease contacts if needed,inspection/check,Regular (not stated),grease,navigate;open-door;apply-grease,Shock,Isolation required,SMA-SCWA sec 7.1
+T075,MV switchgear,Switchgear inspection,inspection/check,Annual,visual,navigate;open-door;visual-read,MV arc flash,Isolation/arc-rated PPE,NREL-73822 App B
+T076,MV substation,Infrared inspection of AC substation,inspection/check,At commissioning and end-of-warranty (per NREL),IR camera,navigate;thermal-image,MV,Energised,NREL-73822 sec 9.1
+T077,AC electrical,Inspect AC disconnect box and switch positions,inspection/check,Annual,visual,navigate;open-door;turn-handle;visual-read,AC arc,Isolation before opening,NREL-73822 App B
+T078,AC electrical,"Exercise protection devices (breakers, relays)",inspection/check,Annual,test set,navigate;press-button;turn-handle,Arc,Isolation or test mode,NREL-73822 App B
+T079,AC electrical,Replace AC fuse or breaker; repair AC line-to-line fault,physical maintenance,As needed,tools,navigate;pull-fuse;plug-unplug-connector,AC arc,Isolation required,NREL-73822 App C
+T080,AC electrical,Replace broken AC conduit and fittings,physical maintenance,As needed,hand tools,navigate;torque-fastener,Shock if live,Isolation required,NREL-73822 App C
+T081,Earthing and bonding,Test system grounding (megger),inspection/check,Annual,megger (insulation tester),navigate;multimeter-probe,Shock,Isolation required,NREL-73822 App B
+T082,Weather station,Spot-check pyranometer against handheld reference,inspection/check,Annual,handheld reference pyranometer,navigate;visual-read,None,No,NREL-73822 App B
+T083,Weather station,Clean pyranometer glass dome,physical maintenance,Weekly (Class A) or fortnightly (Class B),cloth; water,navigate;wipe-brush,None,No,PYR-snip (Sandia slide)
+T084,Weather station,"Recalibrate pyranometer (remove, send to lab)",physical maintenance,1 yr (IEC Class A default) to 2 yr (manufacturer),replacement sensor,navigate;swap-module,None,No,PYR-snip (Hukseflux)
+T085,Weather station,Anemometer inspection and calibration; replace cup-wheel,inspection/check,Annual,visual; replacement cup-wheel,navigate;visual-read;swap-module,None,No,NREL-73822 App B; sec 5.6
+T086,SCADA and comms,Check string-monitoring and communication units,inspection/check,Per maintenance protocol,visual,navigate;open-door;visual-read,LV,Isolation,SMA-SCWA sec 2
+T087,SCADA and comms,Replace Sunny Central control battery,physical maintenance,Every 8 years,battery,navigate;open-door;swap-module,Battery; electronics,Isolation required,SMA-SCWA sec 5.x (8-yr battery)
+T088,SCADA and comms,Restore lost internet connection,physical maintenance,As needed,network tools,navigate;open-door;plug-unplug-connector;press-button,Low,No,NREL-73822 App C
+T089,SCADA and comms,Monitor alarms and site performance remotely,desk/remote,Ongoing,SCADA,remote-only,None,No,NREL-73822 App B
+T090,Civil and site,Inspect and maintain access roads and crane access,physical maintenance,Periodic (not stated),grader; loader,navigate,Vehicle traffic,No,NREL-73822 sec 5.x (roads)
+T091,Civil and site,"Inspect erosion (gullies, undermined pads, exposed cable)",inspection/check,Not stated,visual,navigate;visual-read,None,No,NREL-73822 sec 5.5.4
+T092,Civil and site,Repair erosion gullies and pad undermining,physical maintenance,As needed,fill; tools,navigate;dig,Buried cable,Check first,NREL-73822 sec 5.5.4
+T093,Civil and site,Clear drainage paths and debris from roof and array,physical maintenance,Periodic (not stated),shovel; rake,navigate;remove-debris,Slip,No,NREL-73822 sec 5.x (drainage)
+T094,Civil and site,Clear snow from access roads and tracker rows,physical maintenance,Seasonal,plow,navigate;remove-debris,Vehicle,No,NREL-73822 sec 5.x (snow)
+T095,Vegetation,Mow and trim under and between rows,physical maintenance,As needed,mower; trimmer,navigate;cut-vegetation,Blades; debris; equipment damage to modules,No,NREL-73822 App B
+T096,Vegetation,Tree removal and trimming that shades the array,physical maintenance,As needed,chainsaw,navigate;cut-vegetation,Chainsaw; height,No,NREL-73822 sec 5.5.3
+T097,Vegetation,Herbicide application,physical maintenance,As needed,sprayer,navigate;spray,Chemical exposure,No,NREL-73822 sec 5.5.3
+T098,Vegetation,Remove debris behind collectors and from gutters,physical maintenance,As needed,hand tools,navigate;remove-debris,Height,No,NREL-73822 App B
+T099,Spares and logistics,Count and locate spare parts inventory,inspection/check,Ongoing,records,navigate;visual-read,None,No,NREL-73822 sec 6.5.3
+T100,Spares and logistics,Store and rotate spare inverters and modules onsite,physical maintenance,Ongoing,forklift; lift,navigate;lift-over-20kg,Heavy,No,NREL-73822 sec 5.2.2; 6.5.3
+T101,Spares and logistics,Record keeping and contractor management,desk/remote,Ongoing,records,remote-only,None,No,NREL-73822 App B
+T102,Battery storage,Clean battery enclosure or container,physical maintenance,Condition-based,cleaner,navigate;wipe-brush,Electrical hazard,Energised,NREL-73822 App B
+T103,Battery storage,"Visual survey of battery bank for cracks, bulging, enclosure integrity",inspection/check,Annual,visual,navigate;visual-read,Battery hazards,Energised,NREL-73822 App B
+T104,Battery storage,Corrosion inspection and re-paint of battery hardware,physical maintenance,Annual,wire brush; paint,navigate;wipe-brush,Electrical,Energised,NREL-73822 App B
+T105,Battery storage,Cell/module voltage and resistance test at string level,inspection/check,Chemistry-dependent (condition),multimeter,navigate;multimeter-probe;plug-unplug-connector,Shock; thermal runaway,Energised,NREL-73822 App B
+T106,Battery storage,Replace ventilation air filters,physical maintenance,Quarterly,filter,navigate;open-door;replace-filter,Electrical,Energised,NREL-73822 App B
+T107,Battery storage,Infrared imaging of battery systems,inspection/check,Not stated,IR camera,navigate;thermal-image,Electrical,Energised,NREL-73822 sec 9.2.4.3

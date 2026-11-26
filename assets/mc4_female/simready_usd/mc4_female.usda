@@ -1,0 +1,917 @@
+#usda 1.0
+(
+    customLayerData = {
+        dictionary SimReady_Metadata = {
+            float3 asset_extents = (0.110300004, 0.0226, 0.0226)
+            string asset_license = "CC-BY 4.0"
+            string asset_name = "mc4_female"
+            string asset_type = "prop"
+            string author = "Radiant Robotics (SolarBench)"
+            string category = "electrical"
+            double mass = 0.03325
+            string qcode = "Q17103376"
+            int rigid_body_count = 1
+            string source_file = "src/solarbench/assets/build.py"
+            string usd_date_generated = "2026-10-26"
+        }
+    }
+    defaultPrim = "RootNode"
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "RootNode" (
+    prepend apiSchemas = ["SemanticsLabelsAPI:class", "PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    assetInfo = {
+        asset identifier = @./mc4_female.usda@
+        string name = "mc4_female"
+        string version = "0.1.0"
+    }
+    kind = "component"
+)
+{
+    point3f physics:centerOfMass = (0.03, 0, 0)
+    float3 physics:diagonalInertia = (0.0000015004063, 0.0000107252035, 0.0000107252035)
+    float physics:mass = 0.03325
+    quatf physics:principalAxes = (1, 0, 0, 0)
+    token[] semantics:labels:class = ["mc4_connector_female"]
+
+    def "Looks"
+    {
+        def Material "black_plastic" (
+            prepend apiSchemas = ["SemanticsLabelsAPI:material"]
+        )
+        {
+            token outputs:surface.connect = </RootNode/Looks/black_plastic/PreviewSurface.outputs:surface>
+            token[] semantics:labels:material = ["plastic"]
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.035, 0.035, 0.04)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.7
+                token outputs:surface
+            }
+        }
+
+        def Material "connector_ppo" (
+            prepend apiSchemas = ["SemanticsLabelsAPI:material"]
+        )
+        {
+            token outputs:surface.connect = </RootNode/Looks/connector_ppo/PreviewSurface.outputs:surface>
+            token[] semantics:labels:material = ["plastic"]
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.028, 0.028, 0.03)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.45
+                token outputs:surface
+            }
+        }
+
+        def Material "connector_recess" (
+            prepend apiSchemas = ["SemanticsLabelsAPI:material"]
+        )
+        {
+            token outputs:surface.connect = </RootNode/Looks/connector_recess/PreviewSurface.outputs:surface>
+            token[] semantics:labels:material = ["plastic"]
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.11, 0.11, 0.12)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.6
+                token outputs:surface
+            }
+        }
+
+        def Material "pv_cable_jacket" (
+            prepend apiSchemas = ["SemanticsLabelsAPI:material"]
+        )
+        {
+            token outputs:surface.connect = </RootNode/Looks/pv_cable_jacket/PreviewSurface.outputs:surface>
+            token[] semantics:labels:material = ["rubber"]
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.02, 0.02, 0.022)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.6
+                token outputs:surface
+            }
+        }
+
+        def Material "polarity_red" (
+            prepend apiSchemas = ["SemanticsLabelsAPI:material"]
+        )
+        {
+            token outputs:surface.connect = </RootNode/Looks/polarity_red/PreviewSurface.outputs:surface>
+            token[] semantics:labels:material = ["plastic"]
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.62, 0.06, 0.05)
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+    }
+
+    def "PhysicsMaterials"
+    {
+        def Material "connector_plastic" (
+            prepend apiSchemas = ["PhysicsMaterialAPI", "SemanticsLabelsAPI:material"]
+        )
+        {
+            float physics:dynamicFriction = 0.35
+            float physics:restitution = 0
+            float physics:staticFriction = 0.35
+            token[] semantics:labels:material = ["plastic"]
+        }
+    }
+
+    def "Colliders"
+    {
+        def Cylinder "nose" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "MaterialBindingAPI"]
+        )
+        {
+            uniform token axis = "Z"
+            float3[] extent = [(-0.0067, -0.0067, -0.0074), (0.0067, 0.0067, 0.0074)]
+            double height = 0.0148
+            rel material:binding:physics = </RootNode/PhysicsMaterials/connector_plastic> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            uniform token purpose = "guide"
+            double radius = 0.0067
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.0086, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Capsule "nose_tip" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "MaterialBindingAPI"]
+        )
+        {
+            uniform token axis = "X"
+            float3[] extent = [(-0.006, -0.0055, -0.0055), (0.006, 0.0055, 0.0055)]
+            double height = 0.001
+            rel material:binding:physics = </RootNode/PhysicsMaterials/connector_plastic> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            uniform token purpose = "guide"
+            double radius = 0.0055000000000000005
+            double3 xformOp:translate = (0.006, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Cylinder "body" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "MaterialBindingAPI"]
+        )
+        {
+            uniform token axis = "Z"
+            float3[] extent = [(-0.0095, -0.0095, -0.022), (0.0095, 0.0095, 0.022)]
+            double height = 0.044
+            rel material:binding:physics = </RootNode/PhysicsMaterials/connector_plastic> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            uniform token purpose = "guide"
+            double radius = 0.0095
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.038, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Capsule "cable_stub" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "MaterialBindingAPI"]
+        )
+        {
+            uniform token axis = "X"
+            float3[] extent = [(-0.025, -0.00275, -0.00275), (0.025, 0.00275, 0.00275)]
+            double height = 0.044500000000000005
+            rel material:binding:physics = </RootNode/PhysicsMaterials/connector_plastic> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            uniform token purpose = "guide"
+            double radius = 0.00275
+            double3 xformOp:translate = (0.08499999999999999, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+
+    def "Visuals"
+    {
+        def Mesh "nose" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0067, -0.0067, -0.008), (0.0067, 0.0067, 0.008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 24, 24]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 24, 25, 23, 24, 26, 27, 25, 26, 28, 29, 27, 28, 30, 31, 29, 30, 32, 33, 31, 32, 34, 35, 33, 34, 36, 37, 35, 36, 38, 39, 37, 38, 40, 41, 39, 40, 42, 43, 41, 42, 44, 45, 43, 44, 46, 47, 45, 46, 0, 1, 47, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(1, 0, 0), (0.9659258, 0.25881904, 0), (0.9659258, 0.25881904, 0), (1, 0, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.8660254, 0.5, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (0.25881904, 0.9659258, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.70710677, 0.70710677, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.8660254, 0.5, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-0.9659258, 0.25881904, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.9659258, -0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.8660254, -0.5, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.70710677, -0.70710677, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-0.25881904, -0.9659258, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.70710677, -0.70710677, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.8660254, -0.5, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (0.9659258, -0.25881904, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.9659258, -0.25881904, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.0067, 0, -0.008), (0.0067, 0, 0.008), (0.006471703, 0.0017340876, -0.008), (0.006471703, 0.0017340876, 0.008), (0.00580237, 0.00335, -0.008), (0.00580237, 0.00335, 0.008), (0.0047376156, 0.0047376156, -0.008), (0.0047376156, 0.0047376156, 0.008), (0.00335, 0.00580237, -0.008), (0.00335, 0.00580237, 0.008), (0.0017340876, 0.006471703, -0.008), (0.0017340876, 0.006471703, 0.008), (4.1025667e-19, 0.0067, -0.008), (4.1025667e-19, 0.0067, 0.008), (-0.0017340876, 0.006471703, -0.008), (-0.0017340876, 0.006471703, 0.008), (-0.00335, 0.00580237, -0.008), (-0.00335, 0.00580237, 0.008), (-0.0047376156, 0.0047376156, -0.008), (-0.0047376156, 0.0047376156, 0.008), (-0.00580237, 0.00335, -0.008), (-0.00580237, 0.00335, 0.008), (-0.006471703, 0.0017340876, -0.008), (-0.006471703, 0.0017340876, 0.008), (-0.0067, 8.2051333e-19, -0.008), (-0.0067, 8.2051333e-19, 0.008), (-0.006471703, -0.0017340876, -0.008), (-0.006471703, -0.0017340876, 0.008), (-0.00580237, -0.00335, -0.008), (-0.00580237, -0.00335, 0.008), (-0.0047376156, -0.0047376156, -0.008), (-0.0047376156, -0.0047376156, 0.008), (-0.00335, -0.00580237, -0.008), (-0.00335, -0.00580237, 0.008), (-0.0017340876, -0.006471703, -0.008), (-0.0017340876, -0.006471703, 0.008), (-1.23077e-18, -0.0067, -0.008), (-1.23077e-18, -0.0067, 0.008), (0.0017340876, -0.006471703, -0.008), (0.0017340876, -0.006471703, 0.008), (0.00335, -0.00580237, -0.008), (0.00335, -0.00580237, 0.008), (0.0047376156, -0.0047376156, -0.008), (0.0047376156, -0.0047376156, 0.008), (0.00580237, -0.00335, -0.008), (0.00580237, -0.00335, 0.008), (0.006471703, -0.0017340876, -0.008), (0.006471703, -0.0017340876, 0.008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.008, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "latch_l" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.009, -0.0008, -0.0031), (0.009, 0.0008, 0.0031)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.009, -0.0008, -0.0031), (0.009, -0.0008, -0.0031), (0.009, 0.0008, -0.0031), (-0.009, 0.0008, -0.0031), (-0.009, -0.0008, 0.0031), (0.009, -0.0008, 0.0031), (0.009, 0.0008, 0.0031), (-0.009, 0.0008, 0.0031)]
+            uniform token subdivisionScheme = "none"
+            double3 xformOp:translate = (0.017, 0.010499999999999999, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Mesh "latch_hook_l" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0015, -0.00125, -0.0031), (0.0015, 0.00125, 0.0031)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0015, -0.00125, -0.0031), (0.0015, -0.00125, -0.0031), (0.0015, 0.00125, -0.0031), (-0.0015, 0.00125, -0.0031), (-0.0015, -0.00125, 0.0031), (0.0015, -0.00125, 0.0031), (0.0015, 0.00125, 0.0031), (-0.0015, 0.00125, 0.0031)]
+            uniform token subdivisionScheme = "none"
+            double3 xformOp:translate = (0.0095, 0.009899999999999999, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Mesh "latch_r" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.009, -0.0008, -0.0031), (0.009, 0.0008, 0.0031)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.009, -0.0008, -0.0031), (0.009, -0.0008, -0.0031), (0.009, 0.0008, -0.0031), (-0.009, 0.0008, -0.0031), (-0.009, -0.0008, 0.0031), (0.009, -0.0008, 0.0031), (0.009, 0.0008, 0.0031), (-0.009, 0.0008, 0.0031)]
+            uniform token subdivisionScheme = "none"
+            double3 xformOp:translate = (0.017, -0.010499999999999999, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Mesh "latch_hook_r" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0015, -0.00125, -0.0031), (0.0015, 0.00125, 0.0031)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0015, -0.00125, -0.0031), (0.0015, -0.00125, -0.0031), (0.0015, 0.00125, -0.0031), (-0.0015, 0.00125, -0.0031), (-0.0015, -0.00125, 0.0031), (0.0015, -0.00125, 0.0031), (0.0015, 0.00125, 0.0031), (-0.0015, 0.00125, 0.0031)]
+            uniform token subdivisionScheme = "none"
+            double3 xformOp:translate = (0.0095, -0.009899999999999999, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Mesh "grip" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0095, -0.0095, -0.0135), (0.0095, 0.0095, 0.0135)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 24, 24]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 24, 25, 23, 24, 26, 27, 25, 26, 28, 29, 27, 28, 30, 31, 29, 30, 32, 33, 31, 32, 34, 35, 33, 34, 36, 37, 35, 36, 38, 39, 37, 38, 40, 41, 39, 40, 42, 43, 41, 42, 44, 45, 43, 44, 46, 47, 45, 46, 0, 1, 47, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(1, 0, 0), (0.9659258, 0.25881904, 0), (0.9659258, 0.25881904, 0), (1, 0, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.8660254, 0.5, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (0.25881904, 0.9659258, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.70710677, 0.70710677, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.8660254, 0.5, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-0.9659258, 0.25881904, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.9659258, -0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.8660254, -0.5, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.70710677, -0.70710677, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-0.25881904, -0.9659258, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.70710677, -0.70710677, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.8660254, -0.5, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (0.9659258, -0.25881904, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.9659258, -0.25881904, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.0095, 0, -0.0135), (0.0095, 0, 0.0135), (0.009176295, 0.002458781, -0.0135), (0.009176295, 0.002458781, 0.0135), (0.008227241, 0.00475, -0.0135), (0.008227241, 0.00475, 0.0135), (0.0067175142, 0.0067175142, -0.0135), (0.0067175142, 0.0067175142, 0.0135), (0.00475, 0.008227241, -0.0135), (0.00475, 0.008227241, 0.0135), (0.002458781, 0.009176295, -0.0135), (0.002458781, 0.009176295, 0.0135), (5.817072e-19, 0.0095, -0.0135), (5.817072e-19, 0.0095, 0.0135), (-0.002458781, 0.009176295, -0.0135), (-0.002458781, 0.009176295, 0.0135), (-0.00475, 0.008227241, -0.0135), (-0.00475, 0.008227241, 0.0135), (-0.0067175142, 0.0067175142, -0.0135), (-0.0067175142, 0.0067175142, 0.0135), (-0.008227241, 0.00475, -0.0135), (-0.008227241, 0.00475, 0.0135), (-0.009176295, 0.002458781, -0.0135), (-0.009176295, 0.002458781, 0.0135), (-0.0095, 1.1634144e-18, -0.0135), (-0.0095, 1.1634144e-18, 0.0135), (-0.009176295, -0.002458781, -0.0135), (-0.009176295, -0.002458781, 0.0135), (-0.008227241, -0.00475, -0.0135), (-0.008227241, -0.00475, 0.0135), (-0.0067175142, -0.0067175142, -0.0135), (-0.0067175142, -0.0067175142, 0.0135), (-0.00475, -0.008227241, -0.0135), (-0.00475, -0.008227241, 0.0135), (-0.002458781, -0.009176295, -0.0135), (-0.002458781, -0.009176295, 0.0135), (-1.7451218e-18, -0.0095, -0.0135), (-1.7451218e-18, -0.0095, 0.0135), (0.002458781, -0.009176295, -0.0135), (0.002458781, -0.009176295, 0.0135), (0.00475, -0.008227241, -0.0135), (0.00475, -0.008227241, 0.0135), (0.0067175142, -0.0067175142, -0.0135), (0.0067175142, -0.0067175142, 0.0135), (0.008227241, -0.00475, -0.0135), (0.008227241, -0.00475, 0.0135), (0.009176295, -0.002458781, -0.0135), (0.009176295, -0.002458781, 0.0135)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.0295, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_00" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            double3 xformOp:translate = (0.0305, 0.00995, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Mesh "grip_rib_01" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (36, 0, 0)
+            double3 xformOp:translate = (0.0305, 0.008049719094030728, 0.005848463260310108)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_02" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (72, 0, 0)
+            double3 xformOp:translate = (0.0305, 0.0030747190940307273, 0.009463012337136778)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_03" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (108, 0, 0)
+            double3 xformOp:translate = (0.0305, -0.003074719094030726, 0.009463012337136778)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_04" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (144, 0, 0)
+            double3 xformOp:translate = (0.0305, -0.008049719094030726, 0.005848463260310109)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_05" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (180, 0, 0)
+            double3 xformOp:translate = (0.0305, -0.00995, 1.2185235651516166e-18)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_06" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (216, 0, 0)
+            double3 xformOp:translate = (0.0305, -0.008049719094030728, -0.005848463260310107)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_07" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (252, 0, 0)
+            double3 xformOp:translate = (0.0305, -0.0030747190940307286, -0.009463012337136778)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_08" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (288, 0, 0)
+            double3 xformOp:translate = (0.0305, 0.003074719094030725, -0.009463012337136778)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "grip_rib_09" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0105, -0.00045, -0.0008), (0.0105, 0.00045, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0105, -0.00045, -0.0008), (0.0105, -0.00045, -0.0008), (0.0105, 0.00045, -0.0008), (-0.0105, 0.00045, -0.0008), (-0.0105, -0.00045, 0.0008), (0.0105, -0.00045, 0.0008), (0.0105, 0.00045, 0.0008), (-0.0105, 0.00045, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (324, 0, 0)
+            double3 xformOp:translate = (0.0305, 0.008049719094030726, -0.00584846326031011)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0101, -0.0101, -0.0085), (0.0101, 0.0101, 0.0085)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 16, 16]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 24, 25, 23, 24, 26, 27, 25, 26, 28, 29, 27, 28, 30, 31, 29, 30, 0, 1, 31, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(1, 0, 0), (0.9238795, 0.38268343, 0), (0.9238795, 0.38268343, 0), (1, 0, 0), (0.9238795, 0.38268343, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.9238795, 0.38268343, 0), (0.70710677, 0.70710677, 0), (0.38268343, 0.9238795, 0), (0.38268343, 0.9238795, 0), (0.70710677, 0.70710677, 0), (0.38268343, 0.9238795, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.38268343, 0.9238795, 0), (6.123234e-17, 1, 0), (-0.38268343, 0.9238795, 0), (-0.38268343, 0.9238795, 0), (6.123234e-17, 1, 0), (-0.38268343, 0.9238795, 0), (-0.70710677, 0.70710677, 0), (-0.70710677, 0.70710677, 0), (-0.38268343, 0.9238795, 0), (-0.70710677, 0.70710677, 0), (-0.9238795, 0.38268343, 0), (-0.9238795, 0.38268343, 0), (-0.70710677, 0.70710677, 0), (-0.9238795, 0.38268343, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.9238795, 0.38268343, 0), (-1, 1.2246469e-16, 0), (-0.9238795, -0.38268343, 0), (-0.9238795, -0.38268343, 0), (-1, 1.2246469e-16, 0), (-0.9238795, -0.38268343, 0), (-0.70710677, -0.70710677, 0), (-0.70710677, -0.70710677, 0), (-0.9238795, -0.38268343, 0), (-0.70710677, -0.70710677, 0), (-0.38268343, -0.9238795, 0), (-0.38268343, -0.9238795, 0), (-0.70710677, -0.70710677, 0), (-0.38268343, -0.9238795, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.38268343, -0.9238795, 0), (-1.8369701e-16, -1, 0), (0.38268343, -0.9238795, 0), (0.38268343, -0.9238795, 0), (-1.8369701e-16, -1, 0), (0.38268343, -0.9238795, 0), (0.70710677, -0.70710677, 0), (0.70710677, -0.70710677, 0), (0.38268343, -0.9238795, 0), (0.70710677, -0.70710677, 0), (0.9238795, -0.38268343, 0), (0.9238795, -0.38268343, 0), (0.70710677, -0.70710677, 0), (0.9238795, -0.38268343, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.9238795, -0.38268343, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.0101, 0, -0.0085), (0.0101, 0, 0.0085), (0.0093311835, 0.0038651028, -0.0085), (0.0093311835, 0.0038651028, 0.0085), (0.0071417787, 0.0071417787, -0.0085), (0.0071417787, 0.0071417787, 0.0085), (0.0038651028, 0.0093311835, -0.0085), (0.0038651028, 0.0093311835, 0.0085), (6.1844665e-19, 0.0101, -0.0085), (6.1844665e-19, 0.0101, 0.0085), (-0.0038651028, 0.0093311835, -0.0085), (-0.0038651028, 0.0093311835, 0.0085), (-0.0071417787, 0.0071417787, -0.0085), (-0.0071417787, 0.0071417787, 0.0085), (-0.0093311835, 0.0038651028, -0.0085), (-0.0093311835, 0.0038651028, 0.0085), (-0.0101, 1.2368933e-18, -0.0085), (-0.0101, 1.2368933e-18, 0.0085), (-0.0093311835, -0.0038651028, -0.0085), (-0.0093311835, -0.0038651028, 0.0085), (-0.0071417787, -0.0071417787, -0.0085), (-0.0071417787, -0.0071417787, 0.0085), (-0.0038651028, -0.0093311835, -0.0085), (-0.0038651028, -0.0093311835, 0.0085), (-1.8553399e-18, -0.0101, -0.0085), (-1.8553399e-18, -0.0101, 0.0085), (0.0038651028, -0.0093311835, -0.0085), (0.0038651028, -0.0093311835, 0.0085), (0.0071417787, -0.0071417787, -0.0085), (0.0071417787, -0.0071417787, 0.0085), (0.0093311835, -0.0038651028, -0.0085), (0.0093311835, -0.0038651028, 0.0085)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.0515, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_00" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            double3 xformOp:translate = (0.0515, 0.0107, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Mesh "nut_rib_01" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (22.5, 0, 0)
+            double3 xformOp:translate = (0.0515, 0.009885510997870767, 0.004094712726306461)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_02" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (45, 0, 0)
+            double3 xformOp:translate = (0.0515, 0.007566042558696058, 0.0075660425586960576)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_03" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (67.5, 0, 0)
+            double3 xformOp:translate = (0.0515, 0.004094712726306461, 0.009885510997870767)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_04" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (90, 0, 0)
+            double3 xformOp:translate = (0.0515, 6.551860375438339e-19, 0.0107)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_05" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (112.5, 0, 0)
+            double3 xformOp:translate = (0.0515, -0.00409471272630646, 0.009885510997870767)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_06" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (135, 0, 0)
+            double3 xformOp:translate = (0.0515, -0.0075660425586960576, 0.007566042558696058)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_07" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (157.5, 0, 0)
+            double3 xformOp:translate = (0.0515, -0.009885510997870767, 0.0040947127263064615)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_08" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (180, 0, 0)
+            double3 xformOp:translate = (0.0515, -0.0107, 1.3103720750876678e-18)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_09" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (202.5, 0, 0)
+            double3 xformOp:translate = (0.0515, -0.009885510997870769, -0.004094712726306459)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_10" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (225, 0, 0)
+            double3 xformOp:translate = (0.0515, -0.00756604255869606, -0.0075660425586960576)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_11" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (247.5, 0, 0)
+            double3 xformOp:translate = (0.0515, -0.004094712726306467, -0.009885510997870765)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_12" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (270, 0, 0)
+            double3 xformOp:translate = (0.0515, -1.9655581126315015e-18, -0.0107)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_13" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (292.5, 0, 0)
+            double3 xformOp:translate = (0.0515, 0.004094712726306463, -0.009885510997870767)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_14" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (315, 0, 0)
+            double3 xformOp:translate = (0.0515, 0.007566042558696057, -0.00756604255869606)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nut_rib_15" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0075, -0.0006, -0.0011), (0.0075, 0.0006, 0.0011)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(-0.0075, -0.0006, -0.0011), (0.0075, -0.0006, -0.0011), (0.0075, 0.0006, -0.0011), (-0.0075, 0.0006, -0.0011), (-0.0075, -0.0006, 0.0011), (0.0075, -0.0006, 0.0011), (0.0075, 0.0006, 0.0011), (-0.0075, 0.0006, 0.0011)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (337.5, 0, 0)
+            double3 xformOp:translate = (0.0515, 0.009885510997870765, -0.004094712726306467)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "gland" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0062, -0.0062, -0.004), (0.0062, 0.0062, 0.004)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 24, 24]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 24, 25, 23, 24, 26, 27, 25, 26, 28, 29, 27, 28, 30, 31, 29, 30, 32, 33, 31, 32, 34, 35, 33, 34, 36, 37, 35, 36, 38, 39, 37, 38, 40, 41, 39, 40, 42, 43, 41, 42, 44, 45, 43, 44, 46, 47, 45, 46, 0, 1, 47, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(1, 0, 0), (0.9659258, 0.25881904, 0), (0.9659258, 0.25881904, 0), (1, 0, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.8660254, 0.5, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (0.25881904, 0.9659258, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.70710677, 0.70710677, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.8660254, 0.5, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-0.9659258, 0.25881904, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.9659258, -0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.8660254, -0.5, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.70710677, -0.70710677, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-0.25881904, -0.9659258, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.70710677, -0.70710677, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.8660254, -0.5, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (0.9659258, -0.25881904, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.9659258, -0.25881904, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.0062, 0, -0.004), (0.0062, 0, 0.004), (0.00598874, 0.0016046781, -0.004), (0.00598874, 0.0016046781, 0.004), (0.0053693573, 0.0031, -0.004), (0.0053693573, 0.0031, 0.004), (0.0043840623, 0.0043840623, -0.004), (0.0043840623, 0.0043840623, 0.004), (0.0031, 0.0053693573, -0.004), (0.0031, 0.0053693573, 0.004), (0.0016046781, 0.00598874, -0.004), (0.0016046781, 0.00598874, 0.004), (3.7964051e-19, 0.0062, -0.004), (3.7964051e-19, 0.0062, 0.004), (-0.0016046781, 0.00598874, -0.004), (-0.0016046781, 0.00598874, 0.004), (-0.0031, 0.0053693573, -0.004), (-0.0031, 0.0053693573, 0.004), (-0.0043840623, 0.0043840623, -0.004), (-0.0043840623, 0.0043840623, 0.004), (-0.0053693573, 0.0031, -0.004), (-0.0053693573, 0.0031, 0.004), (-0.00598874, 0.0016046781, -0.004), (-0.00598874, 0.0016046781, 0.004), (-0.0062, 7.5928103e-19, -0.004), (-0.0062, 7.5928103e-19, 0.004), (-0.00598874, -0.0016046781, -0.004), (-0.00598874, -0.0016046781, 0.004), (-0.0053693573, -0.0031, -0.004), (-0.0053693573, -0.0031, 0.004), (-0.0043840623, -0.0043840623, -0.004), (-0.0043840623, -0.0043840623, 0.004), (-0.0031, -0.0053693573, -0.004), (-0.0031, -0.0053693573, 0.004), (-0.0016046781, -0.00598874, -0.004), (-0.0016046781, -0.00598874, 0.004), (-1.1389215e-18, -0.0062, -0.004), (-1.1389215e-18, -0.0062, 0.004), (0.0016046781, -0.00598874, -0.004), (0.0016046781, -0.00598874, 0.004), (0.0031, -0.0053693573, -0.004), (0.0031, -0.0053693573, 0.004), (0.0043840623, -0.0043840623, -0.004), (0.0043840623, -0.0043840623, 0.004), (0.0053693573, -0.0031, -0.004), (0.0053693573, -0.0031, 0.004), (0.00598874, -0.0016046781, -0.004), (0.00598874, -0.0016046781, 0.004)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.064, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "relief" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.0042, -0.0042, -0.004), (0.0042, 0.0042, 0.004)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 24, 24]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 24, 25, 23, 24, 26, 27, 25, 26, 28, 29, 27, 28, 30, 31, 29, 30, 32, 33, 31, 32, 34, 35, 33, 34, 36, 37, 35, 36, 38, 39, 37, 38, 40, 41, 39, 40, 42, 43, 41, 42, 44, 45, 43, 44, 46, 47, 45, 46, 0, 1, 47, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47]
+            rel material:binding = </RootNode/Looks/connector_ppo>
+            normal3f[] normals = [(1, 0, 0), (0.9659258, 0.25881904, 0), (0.9659258, 0.25881904, 0), (1, 0, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.8660254, 0.5, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (0.25881904, 0.9659258, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.70710677, 0.70710677, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.8660254, 0.5, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-0.9659258, 0.25881904, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.9659258, -0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.8660254, -0.5, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.70710677, -0.70710677, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-0.25881904, -0.9659258, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.70710677, -0.70710677, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.8660254, -0.5, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (0.9659258, -0.25881904, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.9659258, -0.25881904, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.0042, 0, -0.004), (0.0042, 0, 0.004), (0.0040568886, 0.00108704, -0.004), (0.0040568886, 0.00108704, 0.004), (0.0036373066, 0.0021, -0.004), (0.0036373066, 0.0021, 0.004), (0.0029698485, 0.0029698485, -0.004), (0.0029698485, 0.0029698485, 0.004), (0.0021, 0.0036373066, -0.004), (0.0021, 0.0036373066, 0.004), (0.00108704, 0.0040568886, -0.004), (0.00108704, 0.0040568886, 0.004), (2.5717583e-19, 0.0042, -0.004), (2.5717583e-19, 0.0042, 0.004), (-0.00108704, 0.0040568886, -0.004), (-0.00108704, 0.0040568886, 0.004), (-0.0021, 0.0036373066, -0.004), (-0.0021, 0.0036373066, 0.004), (-0.0029698485, 0.0029698485, -0.004), (-0.0029698485, 0.0029698485, 0.004), (-0.0036373066, 0.0021, -0.004), (-0.0036373066, 0.0021, 0.004), (-0.0040568886, 0.00108704, -0.004), (-0.0040568886, 0.00108704, 0.004), (-0.0042, 5.1435166e-19, -0.004), (-0.0042, 5.1435166e-19, 0.004), (-0.0040568886, -0.00108704, -0.004), (-0.0040568886, -0.00108704, 0.004), (-0.0036373066, -0.0021, -0.004), (-0.0036373066, -0.0021, 0.004), (-0.0029698485, -0.0029698485, -0.004), (-0.0029698485, -0.0029698485, 0.004), (-0.0021, -0.0036373066, -0.004), (-0.0021, -0.0036373066, 0.004), (-0.00108704, -0.0040568886, -0.004), (-0.00108704, -0.0040568886, 0.004), (-7.715275e-19, -0.0042, -0.004), (-7.715275e-19, -0.0042, 0.004), (0.00108704, -0.0040568886, -0.004), (0.00108704, -0.0040568886, 0.004), (0.0021, -0.0036373066, -0.004), (0.0021, -0.0036373066, 0.004), (0.0029698485, -0.0029698485, -0.004), (0.0029698485, -0.0029698485, 0.004), (0.0036373066, -0.0021, -0.004), (0.0036373066, -0.0021, 0.004), (0.0040568886, -0.00108704, -0.004), (0.0040568886, -0.00108704, 0.004)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.07200000000000001, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "cable" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.00275, -0.00275, -0.017), (0.00275, 0.00275, 0.017)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 12, 12]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 0, 1, 23, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23]
+            rel material:binding = </RootNode/Looks/pv_cable_jacket>
+            normal3f[] normals = [(1, 0, 0), (0.8660254, 0.5, 0), (0.8660254, 0.5, 0), (1, 0, 0), (0.8660254, 0.5, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.8660254, 0.5, 0), (0.5, 0.8660254, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.5, 0.8660254, 0), (6.123234e-17, 1, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (6.123234e-17, 1, 0), (-0.5, 0.8660254, 0), (-0.8660254, 0.5, 0), (-0.8660254, 0.5, 0), (-0.5, 0.8660254, 0), (-0.8660254, 0.5, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.8660254, 0.5, 0), (-1, 1.2246469e-16, 0), (-0.8660254, -0.5, 0), (-0.8660254, -0.5, 0), (-1, 1.2246469e-16, 0), (-0.8660254, -0.5, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.8660254, -0.5, 0), (-0.5, -0.8660254, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.5, -0.8660254, 0), (-1.8369701e-16, -1, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (-1.8369701e-16, -1, 0), (0.5, -0.8660254, 0), (0.8660254, -0.5, 0), (0.8660254, -0.5, 0), (0.5, -0.8660254, 0), (0.8660254, -0.5, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.8660254, -0.5, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.00275, 0, -0.017), (0.00275, 0, 0.017), (0.00238157, 0.001375, -0.017), (0.00238157, 0.001375, 0.017), (0.001375, 0.00238157, -0.017), (0.001375, 0.00238157, 0.017), (1.6838894e-19, 0.00275, -0.017), (1.6838894e-19, 0.00275, 0.017), (-0.001375, 0.00238157, -0.017), (-0.001375, 0.00238157, 0.017), (-0.00238157, 0.001375, -0.017), (-0.00238157, 0.001375, 0.017), (-0.00275, 3.3677788e-19, -0.017), (-0.00275, 3.3677788e-19, 0.017), (-0.00238157, -0.001375, -0.017), (-0.00238157, -0.001375, 0.017), (-0.001375, -0.00238157, -0.017), (-0.001375, -0.00238157, 0.017), (-5.051668e-19, -0.00275, -0.017), (-5.051668e-19, -0.00275, 0.017), (0.001375, -0.00238157, -0.017), (0.001375, -0.00238157, 0.017), (0.00238157, -0.001375, -0.017), (0.00238157, -0.001375, 0.017)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.093, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "polarity" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.00315, -0.00315, -0.005), (0.00315, 0.00315, 0.005)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 12, 12]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 0, 1, 23, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23]
+            rel material:binding = </RootNode/Looks/polarity_red>
+            normal3f[] normals = [(1, 0, 0), (0.8660254, 0.5, 0), (0.8660254, 0.5, 0), (1, 0, 0), (0.8660254, 0.5, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.8660254, 0.5, 0), (0.5, 0.8660254, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.5, 0.8660254, 0), (6.123234e-17, 1, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (6.123234e-17, 1, 0), (-0.5, 0.8660254, 0), (-0.8660254, 0.5, 0), (-0.8660254, 0.5, 0), (-0.5, 0.8660254, 0), (-0.8660254, 0.5, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.8660254, 0.5, 0), (-1, 1.2246469e-16, 0), (-0.8660254, -0.5, 0), (-0.8660254, -0.5, 0), (-1, 1.2246469e-16, 0), (-0.8660254, -0.5, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.8660254, -0.5, 0), (-0.5, -0.8660254, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.5, -0.8660254, 0), (-1.8369701e-16, -1, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (-1.8369701e-16, -1, 0), (0.5, -0.8660254, 0), (0.8660254, -0.5, 0), (0.8660254, -0.5, 0), (0.5, -0.8660254, 0), (0.8660254, -0.5, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.8660254, -0.5, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.00315, 0, -0.005), (0.00315, 0, 0.005), (0.00272798, 0.001575, -0.005), (0.00272798, 0.001575, 0.005), (0.001575, 0.00272798, -0.005), (0.001575, 0.00272798, 0.005), (1.9288187e-19, 0.00315, -0.005), (1.9288187e-19, 0.00315, 0.005), (-0.001575, 0.00272798, -0.005), (-0.001575, 0.00272798, 0.005), (-0.00272798, 0.001575, -0.005), (-0.00272798, 0.001575, 0.005), (-0.00315, 3.8576374e-19, -0.005), (-0.00315, 3.8576374e-19, 0.005), (-0.00272798, -0.001575, -0.005), (-0.00272798, -0.001575, 0.005), (-0.001575, -0.00272798, -0.005), (-0.001575, -0.00272798, 0.005), (-5.786456e-19, -0.00315, -0.005), (-5.786456e-19, -0.00315, 0.005), (0.001575, -0.00272798, -0.005), (0.001575, -0.00272798, 0.005), (0.00272798, -0.001575, -0.005), (0.00272798, -0.001575, 0.005)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (0.087, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Mesh "nose_face" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.003685, -0.003685, -0.00025), (0.003685, 0.003685, 0.00025)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 24, 24]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 24, 25, 23, 24, 26, 27, 25, 26, 28, 29, 27, 28, 30, 31, 29, 30, 32, 33, 31, 32, 34, 35, 33, 34, 36, 37, 35, 36, 38, 39, 37, 38, 40, 41, 39, 40, 42, 43, 41, 42, 44, 45, 43, 44, 46, 47, 45, 46, 0, 1, 47, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47]
+            rel material:binding = </RootNode/Looks/connector_recess>
+            normal3f[] normals = [(1, 0, 0), (0.9659258, 0.25881904, 0), (0.9659258, 0.25881904, 0), (1, 0, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.8660254, 0.5, 0), (0.9659258, 0.25881904, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.8660254, 0.5, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.70710677, 0.70710677, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (0.25881904, 0.9659258, 0), (0.5, 0.8660254, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.25881904, 0.9659258, 0), (6.123234e-17, 1, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-0.25881904, 0.9659258, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.70710677, 0.70710677, 0), (-0.5, 0.8660254, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.8660254, 0.5, 0), (-0.70710677, 0.70710677, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-0.9659258, 0.25881904, 0), (-0.8660254, 0.5, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.9659258, 0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.9659258, -0.25881904, 0), (-1, 1.2246469e-16, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.8660254, -0.5, 0), (-0.9659258, -0.25881904, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.70710677, -0.70710677, 0), (-0.8660254, -0.5, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.70710677, -0.70710677, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-0.25881904, -0.9659258, 0), (-0.5, -0.8660254, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.25881904, -0.9659258, 0), (-1.8369701e-16, -1, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (0.25881904, -0.9659258, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.70710677, -0.70710677, 0), (0.5, -0.8660254, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.8660254, -0.5, 0), (0.70710677, -0.70710677, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (0.9659258, -0.25881904, 0), (0.8660254, -0.5, 0), (0.9659258, -0.25881904, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.9659258, -0.25881904, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.003685, 0, -0.00025), (0.003685, 0, 0.00025), (0.0035594366, 0.0009537482, -0.00025), (0.0035594366, 0.0009537482, 0.00025), (0.0031913037, 0.0018425, -0.00025), (0.0031913037, 0.0018425, 0.00025), (0.0026056885, 0.0026056885, -0.00025), (0.0026056885, 0.0026056885, 0.00025), (0.0018425, 0.0031913037, -0.00025), (0.0018425, 0.0031913037, 0.00025), (0.0009537482, 0.0035594366, -0.00025), (0.0009537482, 0.0035594366, 0.00025), (2.2564117e-19, 0.003685, -0.00025), (2.2564117e-19, 0.003685, 0.00025), (-0.0009537482, 0.0035594366, -0.00025), (-0.0009537482, 0.0035594366, 0.00025), (-0.0018425, 0.0031913037, -0.00025), (-0.0018425, 0.0031913037, 0.00025), (-0.0026056885, 0.0026056885, -0.00025), (-0.0026056885, 0.0026056885, 0.00025), (-0.0031913037, 0.0018425, -0.00025), (-0.0031913037, 0.0018425, 0.00025), (-0.0035594366, 0.0009537482, -0.00025), (-0.0035594366, 0.0009537482, 0.00025), (-0.003685, 4.5128234e-19, -0.00025), (-0.003685, 4.5128234e-19, 0.00025), (-0.0035594366, -0.0009537482, -0.00025), (-0.0035594366, -0.0009537482, 0.00025), (-0.0031913037, -0.0018425, -0.00025), (-0.0031913037, -0.0018425, 0.00025), (-0.0026056885, -0.0026056885, -0.00025), (-0.0026056885, -0.0026056885, 0.00025), (-0.0018425, -0.0031913037, -0.00025), (-0.0018425, -0.0031913037, 0.00025), (-0.0009537482, -0.0035594366, -0.00025), (-0.0009537482, -0.0035594366, 0.00025), (-6.769235e-19, -0.003685, -0.00025), (-6.769235e-19, -0.003685, 0.00025), (0.0009537482, -0.0035594366, -0.00025), (0.0009537482, -0.0035594366, 0.00025), (0.0018425, -0.0031913037, -0.00025), (0.0018425, -0.0031913037, 0.00025), (0.0026056885, -0.0026056885, -0.00025), (0.0026056885, -0.0026056885, 0.00025), (0.0031913037, -0.0018425, -0.00025), (0.0031913037, -0.0018425, 0.00025), (0.0035594366, -0.0009537482, -0.00025), (0.0035594366, -0.0009537482, 0.00025)]
+            uniform token subdivisionScheme = "none"
+            float3 xformOp:rotateXYZ = (0, 90, 0)
+            double3 xformOp:translate = (-0.00004999999999999998, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+    }
+
+    def "Frames"
+    {
+        def Xform "tip"
+        {
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Xform "grasp"
+        {
+            double3 xformOp:translate = (0.038, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Xform "cable_exit"
+        {
+            double3 xformOp:translate = (0.11, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+}
+

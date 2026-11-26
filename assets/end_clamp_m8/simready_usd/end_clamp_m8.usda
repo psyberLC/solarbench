@@ -1,0 +1,304 @@
+#usda 1.0
+(
+    customLayerData = {
+        dictionary SimReady_Metadata = {
+            float3 asset_extents = (0.05, 0.052, 0.0444)
+            string asset_license = "CC-BY 4.0"
+            string asset_name = "end_clamp_m8"
+            string asset_type = "prop"
+            string author = "Radiant Robotics (SolarBench)"
+            string category = "solar"
+            double mass = 0.09
+            string qcode = "Q846600"
+            int rigid_body_count = 2
+            string source_file = "src/solarbench/assets/build.py"
+            string usd_date_generated = "2026-10-26"
+        }
+    }
+    defaultPrim = "RootNode"
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "RootNode" (
+    prepend apiSchemas = ["SemanticsLabelsAPI:class"]
+    assetInfo = {
+        asset identifier = @./end_clamp_m8.usda@
+        string name = "end_clamp_m8"
+        string version = "0.1.0"
+    }
+    kind = "component"
+)
+{
+    token[] semantics:labels:class = ["pv_end_clamp"]
+
+    def "PhysicsMaterials"
+    {
+        def Material "aluminium_frame" (
+            prepend apiSchemas = ["PhysicsMaterialAPI", "SemanticsLabelsAPI:material"]
+        )
+        {
+            float physics:dynamicFriction = 0.5
+            float physics:restitution = 0
+            float physics:staticFriction = 0.5
+            token[] semantics:labels:material = ["aluminium"]
+        }
+
+        def Material "galvanized_steel" (
+            prepend apiSchemas = ["PhysicsMaterialAPI", "SemanticsLabelsAPI:material"]
+        )
+        {
+            float physics:dynamicFriction = 0.47
+            float physics:restitution = 0
+            float physics:staticFriction = 0.61
+            token[] semantics:labels:material = ["steel"]
+        }
+    }
+
+    def Xform "Base" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        point3f physics:centerOfMass = (0, 0, 0)
+        float3 physics:diagonalInertia = (0.00002, 0.00002, 0.00002)
+        float physics:mass = 0.06
+        quatf physics:principalAxes = (1, 0, 0, 0)
+
+        def "Colliders"
+        {
+            def Cube "cap" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "MaterialBindingAPI"]
+            )
+            {
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                rel material:binding:physics = </RootNode/PhysicsMaterials/aluminium_frame> (
+                    bindMaterialAs = "weakerThanDescendants"
+                )
+                uniform token purpose = "guide"
+                double size = 1
+                float3 xformOp:scale = (0.05, 0.026, 0.006)
+                double3 xformOp:translate = (0, 0.004, 0.033)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            }
+
+            def Cube "web" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "MaterialBindingAPI"]
+            )
+            {
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                rel material:binding:physics = </RootNode/PhysicsMaterials/aluminium_frame> (
+                    bindMaterialAs = "weakerThanDescendants"
+                )
+                uniform token purpose = "guide"
+                double size = 1
+                float3 xformOp:scale = (0.05, 0.006, 0.033)
+                double3 xformOp:translate = (0, -0.006, 0.015)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            }
+
+            def Cube "foot" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "MaterialBindingAPI"]
+            )
+            {
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                rel material:binding:physics = </RootNode/PhysicsMaterials/aluminium_frame> (
+                    bindMaterialAs = "weakerThanDescendants"
+                )
+                uniform token purpose = "guide"
+                double size = 1
+                float3 xformOp:scale = (0.05, 0.03, 0.006)
+                double3 xformOp:translate = (0, -0.02, 0.003)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            }
+        }
+
+        def "Visuals"
+        {
+            def Mesh "cap" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                float3[] extent = [(-0.025, -0.013, -0.003), (0.025, 0.013, 0.003)]
+                int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+                int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+                rel material:binding = </RootNode/Looks/anodized_aluminium>
+                normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                    interpolation = "faceVarying"
+                )
+                point3f[] points = [(-0.025, -0.013, -0.003), (0.025, -0.013, -0.003), (0.025, 0.013, -0.003), (-0.025, 0.013, -0.003), (-0.025, -0.013, 0.003), (0.025, -0.013, 0.003), (0.025, 0.013, 0.003), (-0.025, 0.013, 0.003)]
+                uniform token subdivisionScheme = "none"
+                double3 xformOp:translate = (0, 0.004, 0.033)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Mesh "web" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                float3[] extent = [(-0.025, -0.003, -0.0165), (0.025, 0.003, 0.0165)]
+                int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+                int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+                rel material:binding = </RootNode/Looks/anodized_aluminium>
+                normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                    interpolation = "faceVarying"
+                )
+                point3f[] points = [(-0.025, -0.003, -0.0165), (0.025, -0.003, -0.0165), (0.025, 0.003, -0.0165), (-0.025, 0.003, -0.0165), (-0.025, -0.003, 0.0165), (0.025, -0.003, 0.0165), (0.025, 0.003, 0.0165), (-0.025, 0.003, 0.0165)]
+                uniform token subdivisionScheme = "none"
+                double3 xformOp:translate = (0, -0.006, 0.015)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+
+            def Mesh "foot" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                float3[] extent = [(-0.025, -0.015, -0.003), (0.025, 0.015, 0.003)]
+                int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+                int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 1, 2, 6, 5, 3, 0, 4, 7]
+                rel material:binding = </RootNode/Looks/anodized_aluminium>
+                normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0)] (
+                    interpolation = "faceVarying"
+                )
+                point3f[] points = [(-0.025, -0.015, -0.003), (0.025, -0.015, -0.003), (0.025, 0.015, -0.003), (-0.025, 0.015, -0.003), (-0.025, -0.015, 0.003), (0.025, -0.015, 0.003), (0.025, 0.015, 0.003), (-0.025, 0.015, 0.003)]
+                uniform token subdivisionScheme = "none"
+                double3 xformOp:translate = (0, -0.02, 0.003)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+            }
+        }
+    }
+
+    def "Looks"
+    {
+        def Material "anodized_aluminium" (
+            prepend apiSchemas = ["SemanticsLabelsAPI:material"]
+        )
+        {
+            token outputs:surface.connect = </RootNode/Looks/anodized_aluminium/PreviewSurface.outputs:surface>
+            token[] semantics:labels:material = ["aluminium"]
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.72, 0.73, 0.75)
+                float inputs:metallic = 0.6
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+
+        def Material "stainless_bolt" (
+            prepend apiSchemas = ["SemanticsLabelsAPI:material"]
+        )
+        {
+            token outputs:surface.connect = </RootNode/Looks/stainless_bolt/PreviewSurface.outputs:surface>
+            token[] semantics:labels:material = ["steel"]
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.62, 0.62, 0.64)
+                float inputs:metallic = 0.8
+                float inputs:opacity = 1
+                float inputs:roughness = 0.4
+                token outputs:surface
+            }
+        }
+    }
+
+    def "Joints"
+    {
+        def PhysicsFixedJoint "root_joint" (
+            prepend apiSchemas = ["PhysicsArticulationRootAPI"]
+        )
+        {
+            rel physics:body1 = </RootNode/Base>
+        }
+
+        def PhysicsRevoluteJoint "bolt_joint"
+        {
+            custom float[] mjc:solimpfriction = [0.9999, 0.9999, 0.001, 0.5, 2]
+            custom float2 mjc:solreffriction = (0.004, 1)
+            uniform token physics:axis = "Z"
+            rel physics:body0 = </RootNode/Base>
+            rel physics:body1 = </RootNode/Bolt>
+            point3f physics:localPos0 = (0, 0, 0.036)
+            point3f physics:localPos1 = (0, 0, 0)
+        }
+    }
+
+    def Xform "Bolt" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+    )
+    {
+        point3f physics:centerOfMass = (0, 0, 0.004)
+        float3 physics:diagonalInertia = (0.000001, 0.000001, 0.000001)
+        float physics:mass = 0.03
+        quatf physics:principalAxes = (1, 0, 0, 0)
+        double3 xformOp:translate = (0, 0, 0.036000000000000004)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Mesh "washer" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.008, -0.008, -0.0008), (0.008, 0.008, 0.0008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 16, 16]
+            int[] faceVertexIndices = [0, 2, 3, 1, 2, 4, 5, 3, 4, 6, 7, 5, 6, 8, 9, 7, 8, 10, 11, 9, 10, 12, 13, 11, 12, 14, 15, 13, 14, 16, 17, 15, 16, 18, 19, 17, 18, 20, 21, 19, 20, 22, 23, 21, 22, 24, 25, 23, 24, 26, 27, 25, 26, 28, 29, 27, 28, 30, 31, 29, 30, 0, 1, 31, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31]
+            rel material:binding = </RootNode/Looks/stainless_bolt>
+            normal3f[] normals = [(1, 0, 0), (0.9238795, 0.38268343, 0), (0.9238795, 0.38268343, 0), (1, 0, 0), (0.9238795, 0.38268343, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.9238795, 0.38268343, 0), (0.70710677, 0.70710677, 0), (0.38268343, 0.9238795, 0), (0.38268343, 0.9238795, 0), (0.70710677, 0.70710677, 0), (0.38268343, 0.9238795, 0), (6.123234e-17, 1, 0), (6.123234e-17, 1, 0), (0.38268343, 0.9238795, 0), (6.123234e-17, 1, 0), (-0.38268343, 0.9238795, 0), (-0.38268343, 0.9238795, 0), (6.123234e-17, 1, 0), (-0.38268343, 0.9238795, 0), (-0.70710677, 0.70710677, 0), (-0.70710677, 0.70710677, 0), (-0.38268343, 0.9238795, 0), (-0.70710677, 0.70710677, 0), (-0.9238795, 0.38268343, 0), (-0.9238795, 0.38268343, 0), (-0.70710677, 0.70710677, 0), (-0.9238795, 0.38268343, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.9238795, 0.38268343, 0), (-1, 1.2246469e-16, 0), (-0.9238795, -0.38268343, 0), (-0.9238795, -0.38268343, 0), (-1, 1.2246469e-16, 0), (-0.9238795, -0.38268343, 0), (-0.70710677, -0.70710677, 0), (-0.70710677, -0.70710677, 0), (-0.9238795, -0.38268343, 0), (-0.70710677, -0.70710677, 0), (-0.38268343, -0.9238795, 0), (-0.38268343, -0.9238795, 0), (-0.70710677, -0.70710677, 0), (-0.38268343, -0.9238795, 0), (-1.8369701e-16, -1, 0), (-1.8369701e-16, -1, 0), (-0.38268343, -0.9238795, 0), (-1.8369701e-16, -1, 0), (0.38268343, -0.9238795, 0), (0.38268343, -0.9238795, 0), (-1.8369701e-16, -1, 0), (0.38268343, -0.9238795, 0), (0.70710677, -0.70710677, 0), (0.70710677, -0.70710677, 0), (0.38268343, -0.9238795, 0), (0.70710677, -0.70710677, 0), (0.9238795, -0.38268343, 0), (0.9238795, -0.38268343, 0), (0.70710677, -0.70710677, 0), (0.9238795, -0.38268343, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.9238795, -0.38268343, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+                interpolation = "faceVarying"
+            )
+            point3f[] points = [(0.008, 0, -0.0008), (0.008, 0, 0.0008), (0.0073910365, 0.0030614675, -0.0008), (0.0073910365, 0.0030614675, 0.0008), (0.0056568542, 0.0056568542, -0.0008), (0.0056568542, 0.0056568542, 0.0008), (0.0030614675, 0.0073910365, -0.0008), (0.0030614675, 0.0073910365, 0.0008), (4.8985874e-19, 0.008, -0.0008), (4.8985874e-19, 0.008, 0.0008), (-0.0030614675, 0.0073910365, -0.0008), (-0.0030614675, 0.0073910365, 0.0008), (-0.0056568542, 0.0056568542, -0.0008), (-0.0056568542, 0.0056568542, 0.0008), (-0.0073910365, 0.0030614675, -0.0008), (-0.0073910365, 0.0030614675, 0.0008), (-0.008, 9.797175e-19, -0.0008), (-0.008, 9.797175e-19, 0.0008), (-0.0073910365, -0.0030614675, -0.0008), (-0.0073910365, -0.0030614675, 0.0008), (-0.0056568542, -0.0056568542, -0.0008), (-0.0056568542, -0.0056568542, 0.0008), (-0.0030614675, -0.0073910365, -0.0008), (-0.0030614675, -0.0073910365, 0.0008), (-1.4695761e-18, -0.008, -0.0008), (-1.4695761e-18, -0.008, 0.0008), (0.0030614675, -0.0073910365, -0.0008), (0.0030614675, -0.0073910365, 0.0008), (0.0056568542, -0.0056568542, -0.0008), (0.0056568542, -0.0056568542, 0.0008), (0.0073910365, -0.0030614675, -0.0008), (0.0073910365, -0.0030614675, 0.0008)]
+            uniform token subdivisionScheme = "none"
+            double3 xformOp:translate = (0, 0, 0.0008)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Cylinder "washer_col" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "MaterialBindingAPI"]
+        )
+        {
+            uniform token axis = "Z"
+            float3[] extent = [(-0.008, -0.008, -0.0008), (0.008, 0.008, 0.0008)]
+            double height = 0.0016
+            rel material:binding:physics = </RootNode/PhysicsMaterials/galvanized_steel> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            uniform token purpose = "guide"
+            double radius = 0.008
+            double3 xformOp:translate = (0, 0, 0.0008)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Mesh "head" (
+            prepend apiSchemas = ["MaterialBindingAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0065, -0.0075055533, 0.0016), (0.0065, 0.0075055533, 0.0069)]
+            int[] faceVertexCounts = [6, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [5, 4, 3, 2, 1, 0, 12, 13, 14, 15, 16, 17, 0, 1, 7, 6, 1, 2, 8, 7, 2, 3, 9, 8, 3, 4, 10, 9, 4, 5, 11, 10, 5, 0, 6, 11, 6, 7, 13, 12, 7, 8, 14, 13, 8, 9, 15, 14, 9, 10, 16, 15, 10, 11, 17, 16, 11, 6, 12, 17]
+            rel material:binding = </RootNode/Looks/stainless_bolt>
+            rel material:binding:physics = </RootNode/PhysicsMaterials/galvanized_steel> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            normal3f[] normals = [(0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-0.5, 0.8660254, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-1, 1.2246469e-16, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (-0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (0.5, -0.8660254, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (1, -2.4492937e-16, 0), (0.4126678, 0.7147616, 0.5646425), (0.4126678, 0.7147616, 0.5646425), (0.4126678, 0.7147616, 0.5646425), (0.4126678, 0.7147616, 0.5646425), (-0.4126678, 0.7147616, 0.5646425), (-0.4126678, 0.7147616, 0.5646425), (-0.4126678, 0.7147616, 0.5646425), (-0.4126678, 0.7147616, 0.5646425), (-0.8253356, 1.0107446e-16, 0.5646425), (-0.8253356, 1.0107446e-16, 0.5646425), (-0.8253356, 1.0107446e-16, 0.5646425), (-0.8253356, 1.0107446e-16, 0.5646425), (-0.4126678, -0.7147616, 0.5646425), (-0.4126678, -0.7147616, 0.5646425), (-0.4126678, -0.7147616, 0.5646425), (-0.4126678, -0.7147616, 0.5646425), (0.4126678, -0.7147616, 0.5646425), (0.4126678, -0.7147616, 0.5646425), (0.4126678, -0.7147616, 0.5646425), (0.4126678, -0.7147616, 0.5646425), (0.8253356, -2.0214893e-16, 0.5646425), (0.8253356, -2.0214893e-16, 0.5646425), (0.8253356, -2.0214893e-16, 0.5646425), (0.8253356, -2.0214893e-16, 0.5646425)] (
+                interpolation = "faceVarying"
+            )
+            uniform token physics:approximation = "convexHull"
+            point3f[] points = [(0.0065, 0.0037527767, 0.0016), (4.595826e-19, 0.0075055533, 0.0016), (-0.0065, 0.0037527767, 0.0016), (-0.0065, -0.0037527767, 0.0016), (-1.3787479e-18, -0.0075055533, 0.0016), (0.0065, -0.0037527767, 0.0016), (0.0065, 0.0037527767, 0.0063), (4.595826e-19, 0.0075055533, 0.0063), (-0.0065, 0.0037527767, 0.0063), (-0.0065, -0.0037527767, 0.0063), (-1.3787479e-18, -0.0075055533, 0.0063), (0.0065, -0.0037527767, 0.0063), (0.0059, 0.0034063666, 0.0069), (4.171596e-19, 0.006812733, 0.0069), (-0.0059, 0.0034063666, 0.0069), (-0.0059, -0.0034063666, 0.0069), (-1.2514788e-18, -0.006812733, 0.0069), (0.0059, -0.0034063666, 0.0069)]
+            uniform token subdivisionScheme = "none"
+        }
+    }
+
+    def "Frames"
+    {
+        def Xform "head_top"
+        {
+            double3 xformOp:translate = (0, 0, 0.0429)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+}
+

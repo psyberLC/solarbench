@@ -1,0 +1,84 @@
+# ASSUMPTIONS.md
+
+This is a running log of every simplification, mock and unverified number in SolarBench.
+
+- **Where the numbers live.** Every physical number used by assets and tasks is in `solarbench/specs/params.py` or `solarbench/specs/robots.py`. Each value carries a source key and a status: CITED, DERIVED, STAND_IN or ASSUMED.
+- **Where the sources live.** Full source URLs are in [docs/sources.md](docs/sources.md).
+- **Closing an entry.** Do not delete it. Mark it **RESOLVED** with the evidence.
+
+## Hardware and platform
+| # | Item | Status |
+|---|---|---|
+| H1 | The development GPU is an RTX 2070 (8 GB, sm_75). All local measurements are from it. | Measured |
+| H2 | VRAM figures are whole-GPU numbers from `nvidia-smi`. They include about 0.6–1.0 GB used by the desktop. | Measured |
+| H3 | No container image exists yet, so results have only been produced from a native install (board: `infra-container`). | Open |
+| H4 | Isaac Lab v3.0.0 pins Newton 1.6.1 / Warp 1.17. Newton upstream is at 1.7.0. We follow Isaac Lab's pin. | Decision |
+| H5 | **T2 runs with `SimulationCfg.use_newton_actuators=False`.** The default native-actuator fast path folds the whole decimation loop into one graphed step, so `_apply_action` (latch, tether) would run once per *policy* step instead of every physics step. We found this through the unlock-timer audit. The cost is lower throughput. | Decision |
+| H6 | `simready-validate` must stay in its own environment (`tools/validate`). It installs `usd-core`, which conflicts with Isaac Lab's `usd-exchange`: two `pxr` providers in one environment overwrite each other's files. | Decision |
+
+## Physics modelling
+| # | Item | Status |
+|---|---|---|
+| P1 | The PV module is a single rigid body. Bending, twist and glass stress will be computed after the fact, from contact wrenches, by an analytic plate/beam surrogate. They are not simulated as deformation. T4/T5 only. | Proposed simplification |
+| P2 | Damage thresholds are proxies, because no manufacturer publishes numeric handling limits. Warn at more than 1000 Pa equivalent pressure (TS 62782 DML). Count damage at more than 2400 Pa (IEC 61215 minimum) or an impact above 2 J (hail-test energy, DERIVED). Glass fracture uses a Weibull fit (154 MPa, m = 10). | Proxy |
+| P3 | The point-force, drop-acceleration and twist-angle limits for microcrack formation are not known. | UNVERIFIED |
+| P4 | MC4 mating force uses a stand-in: insertion 45 ± 10 N, sampled uniformly per episode, and locked withdrawal 250 ± 50 N, both from a Phoenix 16 mm² PV connector datasheet. The only MC4-specific number cited is IEC 62852's locked retention of at least 80 N. | STAND_IN |
+| P5 | **The latch is a constraint-projection state machine, not a deformable plastic part.** The rules: insertion depth is clamped every physics step. Admissible depth past a 10 mm gate grows linearly with the *measured* hand push, as a quasi-static elastic ramp, and the housing snaps through at the sampled insertion force. A latched housing is held rigidly. A pull above the sampled withdrawal force breaks the latch and counts as damage. **Why not springs:** explicit springs on the 30 g housing are unstable at 600 Hz for any stiffness that could hold 250 N. | Simplification (`solarbench/tasks/latch.py`, unit-tested) |
+| P6 | **The module lead is a tension-only tether** (1000 N/m, damped), anchored at the last cable tie on the rear purlin. It ends in a rigid 5 cm cable stub on the housing. It is not an articulated or deformable cable, and cable weight and bending stiffness are not modelled. The cable seen in renders is a render-only sagging curve of the same free length (`render/cable.py`). | Mock |
+| P7 | **Clamp bolts are revolute joints with a torque–angle model, not threaded contact.** Running torque applies while the bolt is loose (θ < 0). Past snug, the installed torque rises linearly over the snug-to-spec angle to 16 N·m. Accepted window: the module manual's 14–18 N·m (LONGi). Preload is reported as F = T/(K·d). Loosening a preloaded bolt needs breakaway torque = ratio × installed torque. Exceeding 18 N·m counts as damage (over-torque). The running torque, snug-to-spec angle and breakaway ratio are ASSUMED. | Simplification (`solarbench/tasks/bolt.py`, unit-tested) |
+| P8 | Suction end-effectors are force-limited constraints sized as ΔP·A × (1/1.5 safety factor). This is not a fluid model. The Isaac Lab surface gripper only runs on PhysX/Kit. | Proposed mock |
+| P9 | The aluminium-frame-on-galvanised-steel friction coefficient uses the aluminium-on-mild-steel value (0.61 static / 0.47 kinetic). | UNVERIFIED |
+| P10 | Ground friction uses locked-wheel tyre values: gravel 0.35, wet grass 0.20. Their applicability to legged feet is untested. | [S], approximate |
+| P11 | **The default table is 1P portrait**, chosen because both robots can reach it: 20° tilt, 0.60 m lower edge, 20 mm module gap. Tilt and clearance are within Clenergy and Schletter ranges. The C100×50×20×2.0 purlin profile is assumed, and the 3.77 kg/m steel linear density is DERIVED from it. A 2P table is supported by the generator but not yet used in a task. | Partly UNVERIFIED |
+| P12 | The ~21 kg small-format module variant has no datasheet yet. | UNVERIFIED |
+| P13 | Module inertia is that of a uniform box with the datasheet's mass and dimensions. The real mass is concentrated in the glass and frame. | DERIVED approximation |
+| P14 | MC4 housing geometry is assumed: 60 mm per half, 19 mm body diameter, 7.0 mm bore, 16 mm travel, latch at 13 mm, 1.2 mm nose chamfer, 30 g. The Stäubli catalogue drawing was not parsed. The nose must be a cylinder: a capsule nose was almost all hemisphere and could tilt about 13° in the bore (found by `scripts/dev/mc4_insertion_probe.py`). | ASSUMED |
+| P15 | **Connector contact is stiffened:** MuJoCo `solref` = 0.004 s on both MC4 halves, against 0.02 s by default. At the default, the nose sank about 1 mm into a 0.3 mm-clearance bore. 0.004 s is at least 2 physics steps, which satisfies MuJoCo's stability rule. | Tuning (measured) |
+| P16 | **Contact friction is combined differently by each backend:** MuJoCo/Newton take max(μ₁, μ₂), PhysX averages. Pair-specific friction cannot be expressed in USD materials, so the grasp-relevant value (rubber on aluminium/glass, 0.5) is carried by the module side. | Known backend difference |
+| P17 | Radial clearance is fixed at the 0.3 mm nominal for now. Per-episode clearance randomisation (0.15–0.5 mm) needs per-environment USD variants, which are not done yet. The insertion probe shows that 0.15–0.5 mm all seat from up to 6 mm misalignment. | Open |
+| P18 | **The connector pair location is a scenario choice:** the male half is clipped 20 cm below the module back plane, 10 cm from the junction box, with its axis along the row. Leads are run along the rail. The position was chosen so the G1 can reach it (`scripts/dev/reach_study.py`). The real location varies by site and is a randomisation axis to add. | ASSUMED |
+| P20 | **The lead is cable-tied along the rear purlin**, which is common installation practice. Only a 0.5 m free tail runs from the last tie to the housing (ASSUMED). The tether length is 0.45 m (the tail minus the stub). The oracle's peak cable tension is 0 N, so it never strains the tail; a careless policy would trip the cable over-pull damage metric (60 N, Jinko). | ASSUMED |
+| P19 | **The portrait layout uses the LONGi ±1400 mm lead option** (CITED). The standard +400/−200 mm leads cannot span the roughly 1.13 m between adjacent portrait junction boxes. | Decision |
+| P21 | **The bolt's resistance is the joint's dry friction, scheduled every physics step to the model torque** (MuJoCo `frictionloss`, solved implicitly). The bolt therefore only turns when the socket really transmits more than the required torque, and the reaction is felt at the wrist. Regularisation needed to hold a 30 g link: friction `solref` 0.004 s, `solimpfriction` 0.9999, and 0.05 kg·m² joint armature. PhysX splits joint friction into static and dynamic efforts, and dynamic defaults to 0, so both are set to the same value there; Newton/MuJoCo has a single Coulomb value. An earlier constraint-projection version teleported the light link, so the socket could turn through the head; it was removed. | Simplification (tuned, measured) |
+| P22 | **T3 per-episode variation** (uniform):<br>• running torque 0.5–1.2 N·m;<br>• snug-to-spec angle 0.35–0.75 rad;<br>• breakaway ratio 0.8–1.0;<br>• nut factor 0.16–0.24;<br>• loosen start torque 14–18 N·m;<br>• tighten start angle ±30° about half a turn loose (this also sets the hex phase);<br>• arm start joints ±0.05 rad.<br>The clamp and Husky poses are not yet varied. | ASSUMED ranges |
+| P23 | **Socket-on-head contact is stiffened:** clamp colliders use `solref` 0.004 s, `solimp` (0.99, 0.999, 0.2 mm) and contact priority 1. With MuJoCo's default impedance (1 mm transition width), the 0.15 mm-clearance socket ratcheted over the hex corners at about 5 N·m, once every 60°. That is a solver artefact: a real 13 mm socket does not cam out of a hex head at 5 N·m. `solimp` is MuJoCo-only; PhysX uses its own default contact model. | Tuning (measured) |
+| P24 | **Socket geometry:** DIN 933 parallel flats (13 mm across flats) with a 0.6 mm top chamfer on the head. The socket is a 13.3 mm hex of six wall boxes, 10.5 mm deep, without a lead-in chamfer. Head and socket are each a single convex hull, so collision is the same in Newton and PhysX. The clamp follows the Isaac robot-asset layout: base and bolt are sibling rigid bodies, and the articulation root is a world fixed joint. PhysX rejects nested rigid bodies. | ASSUMED geometry |
+
+## Embodiments and control
+| # | Item | Status |
+|---|---|---|
+| E1 | Isaac Lab's stock G1/H1 configs override arm effort limits to 300 N·m. SolarBench uses the Unitree URDF values instead (25 N·m shoulder/elbow/wrist roll, 5 N·m wrist pitch/yaw, 1.4–2.45 N·m Dex3 fingers). These match the drive `maxForce` authored in the Isaac Sim `g1.usd`. | Decision (applied) |
+| E2 | The G1 URDF knee limit is 139 N·m, against 90 (G1) or 120 (EDU) N·m published. The H2 URDF shoulder pitch is 130 N·m, against 120 N·m published. Not yet relevant: the legs are pinned in T2. | Open |
+| E3 | Per-arm payload feasibility assumes an even load split and ignores moments. The real feasibility test is simulation with enforced joint torque limits. | Analysis simplification |
+| E4 | UR payload ratings include the tool. A 1.5 kg tool mass is assumed. | UNVERIFIED |
+| E5 | Husky A300 + UR16e + UR control box may exceed the Husky's 50 kg all-terrain payload. The control box mass is not confirmed. | UNVERIFIED |
+| E6 | The SONIC weights use the NVIDIA Open Model License, which is not OSI-approved. SONIC will be an optional controller, not a required dependency. | Licence note |
+| M1 | **The G1 pelvis is pinned in T2** (fixed base), standing in for a perfect stance controller. A floating base with a trained locomotion/WBC policy is the next step. Balance under connector forces is therefore not tested. | Mock |
+| M2 | The arm PD gains (150 N·m/rad, 6 N·m·s/rad), hand gains (10 / 0.2) and armatures are controller choices, not hardware values. Torque limits are hardware values (E1). | Controller choice |
+| M3 | The R1 action interface uses integral damped-least-squares IK with 0.25 rad anti-windup. The IK steps from the previous joint target, so the arm's own gravity does not leave a steady-state error. | Controller choice |
+| M4 | **The unlock tool is abstracted:** a binary unlock action that opens the latch once ~0.2 s of grasp + unlock has accumulated. The accumulator leaks while not holding. This stands in for the Stäubli PV-MS-PLS tool or a squeeze-release. | Mock |
+| M5 | "Grasped" means opposed contact, fingers against thumb or palm, with more than 1 N per side, low-pass filtered (τ = 50 ms). The contact sensors filter by hand link. | Definition |
+| M6 | MJWarp does not enforce joint velocity limits. Violations are counted per episode (`vel_limit_violation_steps`), not prevented. | Measured, reported |
+| M7 | The Dex3 grasp (thumb 0.3/−1.0/−0.8 rad, fingers 1.6 rad) and its palm-frame centre (0.066, 0.028, 0.006) m were found by grid search under the real finger limits (`scripts/dev/g1_grasp_synthesis.py`). That grasp holds a free housing against a 30 N axial pull with 2.8 mm slip. | Measured |
+| M8 | **UR16e wrist 3 has ±2π of travel**, so each clamp operation must fit in that range. The T3 oracle pre-winds the wrist to ∓3 rad during alignment, as a technician re-grips a ratchet. Loosening success is set at a ¾-turn back-off for the same reason. A real clamp swap may need several turns plus a regrip, which is not modelled yet. | Decision |
+| M9 | **UR16e control:**<br>• kinematic IK command integration: the commanded TCP pose is integrated from the action, and DLS IK solves the joint targets;<br>• joint PD with Isaac Lab's UR10e gains plus a gravity-compensation feedforward torque;<br>• UR URDF effort limits (330/330/150/54/54/54 N·m).<br>The wrist-3 torque reported as the "measured" drive torque is reconstructed from the PD law (kp·Δq − kd·q̇, clipped to 54 N·m), as a nutrunner's transducer would report it. | Controller choice |
+| M10 | **The socket tool is a rigid body fixed to wrist 3:** 160 mm long, 1.2 kg. It stands in for a powered nutrunner, which T3 does not model: the UR wrist itself turns the bolt. | Mock |
+| M11 | **T3 oracle:**<br>• align 5 cm above the head;<br>• *guarded* seat search: rotate at 0.25 rad/s under a light press (1.5 mm past the current depth); if the drive torque exceeds 2 N·m before the socket counts as seated, stop and unwind;<br>• run down at 1 rad/s, final stage at 0.05 rad/s above 8 N·m, shut off at a measured 16 N·m;<br>• relax the wind-up torque before withdrawing.<br>The guard was added after an unguarded search on PhysX cranked a half-seated socket to 38 N·m.<br>**Tried and reverted** (each made Newton worse;: searching in the working direction, tilt-error integral, ramped seat press, engaged-only turning with retries, and a filtered or latched transducer signal. With a firmer press, socket contact chatters, and the wrist-3 PD torque (M9) stops being a reliable transducer: the bolt crossed 18 N·m while it read 1–16 N·m. | Controller choice |
+
+## Visuals and rendering (no effect on physics or metrics)
+| # | Item | Status |
+|---|---|---|
+| V1 | Cell layouts are procedural textures, not photographs. The layout is 144 half-cut cells in 6 × 24. LONGi LR7 is shown as back-contact (HPBC: no front busbars) and Jinko Tiger Neo as TOPCon (16 busbars). The cell technology inferred from the model codes is ASSUMED. | Visual |
+| V2 | The extrusion profiles are drawn from typical shapes, not manufacturer drawings: a box-section module frame, C100×50×20 purlins, C80 rafters, sigma ram posts and C60 braces. K2-style clamps have M8 hex heads. The three split junction boxes are ASSUMED. | Visual |
+| V3 | The G1 is rendered satin grey through an override layer (`g1_satin.usda`). The stock OmniPBR materials have metallic 1.0 and roughness 0.34, which renders as chrome. | Visual override |
+| V4 | The demo scenery is visual-only: neighbouring tables at a 6 m row pitch (GCR 0.4, DERIVED), procedural gravel/grass ground, a procedural sky dome, and a sun at 42° elevation. Simulated assets exist only at the environment origin. | Visual |
+| V6 | **MC4 visuals are styled on the Stäubli MC4-Evo 2:** ribbed grip, two snap-latch arms, ribbed gland nut, strain relief, and red (+) and blue (−) polarity bands. These are not taken from the catalogue drawing. Collision geometry is unchanged (P14). | Visual |
+| V5 | Demo frames are rendered with OVRTX real-time path tracing (`newton_rtx` visualizer). OVRTX is pre-release and under the NVIDIA SLA. | Tooling |
+
+## Benchmark protocol
+| # | Item | Status |
+|---|---|---|
+| B1 | **Physics is not deterministic run to run.** GPU contact solving is not bitwise reproducible across runs with the same seed. Results are therefore reported with 95% confidence intervals, not as exact replays. | Known limitation |
+| B2 | The dev and held-out test splits differ only in seeds. Harder held-out variation splits (clearance, start pose, connector site, module SKU) are planned. | Open |
+| B3 | Episodes with non-finite physics state are terminated and reported as `sim_error_rate`. They are excluded from success rates; they are not scored as damage. | Decision |
+| B4 | Rewards exist only to train the PPO baseline. Benchmark scores come from the stage predicates and damage metrics, never from reward. | Decision |

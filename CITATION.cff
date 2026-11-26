@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use SolarBench, please cite it as below."
+title: "SolarBench: a simulation benchmark for robotic solar-plant maintenance, scored against real task specifications"
+type: software
+authors:
+  - family-names: Pecora
+    given-names: Carlo
+    alias: spartacosan
+    affiliation: Radiant Robotics
+repository-code: "https://github.com/rad-robotics/solarbench"
+license: Apache-2.0
+keywords: [robotics, benchmark, simulation, contact-rich manipulation, photovoltaics, operations and maintenance]

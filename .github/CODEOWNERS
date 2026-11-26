@@ -1,0 +1,16 @@
+# Reviews required from the maintainer. Everything else needs one approval from any collaborator.
+# Rules, contracts and tooling: the parts every track depends on.
+/AGENTS.md                        @spartacosan
+/CLAUDE.md                        @spartacosan
+/CONTRIBUTING.md                  @spartacosan
+/LICENSE                          @spartacosan
+/CITATION.cff                     @spartacosan
+/board/README.md                  @spartacosan
+/docs/interface.md                @spartacosan
+/paper/hypotheses.md              @spartacosan
+/solarbench/agents/__init__.py    @spartacosan
+/solarbench/eval/schema.py        @spartacosan
+/tools/                           @spartacosan
+/.github/                         @spartacosan
+/pyproject.toml                   @spartacosan
+/uv.lock                          @spartacosan

@@ -1,0 +1,79 @@
+[build-system]
+requires = ["uv_build>=0.9,<0.13"]
+build-backend = "uv_build"
+
+[project]
+name = "solarbench"
+version = "0.1.0"
+description = "SolarBench: a simulation benchmark for robotic solar-plant maintenance, scored against real task specifications."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "LICENSE-CC-BY-4.0", "NOTICE"]
+authors = [{ name = "Carlo Pecora" }, { name = "Radiant Robotics" }]
+maintainers = [{ name = "Carlo Pecora" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # Pinned: Isaac Lab 3.0.0 GA (2026-10-20) pins Newton 1.6.1 / Warp 1.17 / torch 2.11 internally.
+    "isaaclab[rsl-rl,skrl,video]==3.0.0",
+    "numpy>=2",
+    "scipy>=1.11",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+# Kit-less PhysX backend, used for the Newton <-> PhysX cross-backend robustness check.
+ovphysx = ["isaaclab[ovphysx]==3.0.0"]
+leapp = ["isaaclab[leapp]==3.0.0"]
+# Kit-less RTX renderer for the demo (pre-release, NVIDIA SLA); not needed for state-based tasks.
+ovrtx = ["isaaclab[ovrtx]==3.0.0"]
+video = ["isaaclab[video]==3.0.0"]
+
+[project.entry-points."isaaclab.tasks"]
+solarbench = "solarbench.tasks"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.11",
+]
+
+[tool.uv]
+index-strategy = "unsafe-best-match"
+prerelease = "allow"
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu130" }
+torchvision = { index = "pytorch-cu130" }
+
+[[tool.uv.index]]
+url = "https://pypi.nvidia.com"
+explicit = false
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.build-backend]
+module-name = "solarbench"
+module-root = ""
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401", "F403"]
+"scripts/**/*.py" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "unit: isolated logic, no simulator",
+    "integration: drives the simulator end-to-end",
+]

@@ -1,0 +1,10 @@
+# Isolated environment for SimReady validation. It must stay separate from the main
+# project: simready-validate brings usd-core, which conflicts with Isaac Lab's usd-exchange.
+[project]
+name = "solarbench-validate"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["simready-validate==2026.8.0", "numpy>=2"]
+
+[tool.uv]
+package = false
