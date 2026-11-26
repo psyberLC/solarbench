@@ -21,7 +21,7 @@ A full factorial over the factors below, on tasks whose success is a physical sp
 | Difficulty dial | 3.0, 1.5 and 1.0 times the real tolerance (1.0 is the specification) |
 
 - The oracle and zero rows are run once per task and dial level; they do not vary with interface or force feedback.
-- **Episodes:** at least 30 per cell for the language models, on held-out seeds, the same episodes in every cell (`eval-paired-episodes`). The oracle and zero rows use 100.
+- **Episodes:** at least 60 per cell for the language models, on held-out seeds, the same episodes in every cell (`eval-paired-episodes`). The oracle and zero rows use 100.
 - **Prompts** are fixed before the runs, identical across brains, and state every condition that is scored (`agents-prompts`).
 
 ## Stages
@@ -69,7 +69,7 @@ Each hypothesis can fail, and a failure is reported in the same table as a succe
 - **One body, two tasks.** Claims are about these tasks on this arm.
 - **Prompt sensitivity.** One fixed prompt set; no claim about the best achievable prompt.
 - **Quantisation.** If a model is quantised to fit, that is a different model; its accuracy cost on a public task is reported.
-- **Episodes per cell.** With 30 episodes a rate carries an interval of about ±17 points. Stage 1 can show a large effect of force feedback and cannot show a small one.
+- **Episodes per cell.** With 60 episodes a rate carries an interval of about ±12 points. Stage 1 can show a large effect of force feedback and cannot show a small one.
 - **A public, fixed scene.** The held-out seeds are public, and the robot and the clamp stand in the same place in every episode. The score of a blind replay of one successful episode is reported beside the results (`audit-degenerate`).
 - **One harness.** Each model is driven through one adapter with one prompt set. Elsewhere, the harness alone has moved one model's score by tens of points.
 - **Shared process.** A policy runs in the evaluator's process. Sensor-only policies are given only the channels they selected (`contract-policy-inputs`); that is a convention checked in review, not isolation.
