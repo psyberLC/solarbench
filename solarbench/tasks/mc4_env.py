@@ -25,8 +25,10 @@ from isaaclab.utils.math import (
     subtract_frame_transforms,
 )
 
+from solarbench import wire
 from solarbench.eval.splits import episode_draws
 from solarbench.specs import MC4
+from solarbench.tasks import channels
 from solarbench.tasks.latch import LatchParams, LatchState, latch_step
 
 from .mc4_env_cfg import LAYOUT
@@ -109,6 +111,15 @@ class MC4Env(DirectRLEnv):
         self.completed_episodes: list[dict] = []
         self._rewarded = torch.zeros(n, len(STAGES), dtype=torch.bool, device=dev)
         self._cables = self._init_cable_drawing() if cfg.show_cables else None
+        # the connector has no work order yet (agents-prompts: it comes with the connector's sensor channels), so
+        # each episode's EPISODE message carries an empty one
+        self.prompts = [""] * n
+
+    @property
+    def catalogue(self) -> dict:
+        """What this task offers a policy (docs/interface.md, section 2): the clock and the privileged state."""
+        return channels.catalogue(self.spec.id, round(1 / self.step_dt), [wire.TOOL_DELTA], ["tick"],
+                                  [channels.policy_channel(self.cfg.observation_space)])
 
     # ------------------------------------------------------------------ render-only cables (env 0)
     def _init_cable_drawing(self):
@@ -309,7 +320,7 @@ class MC4Env(DirectRLEnv):
             ],
             dim=-1,
         )
-        return {"policy": torch.nan_to_num(obs).clamp(-20.0, 20.0)}
+        return {"policy": torch.nan_to_num(obs).clamp(-20.0, 20.0), "clock": channels.clock(self.episode_length_buf)}
 
     def _update_stages(self) -> None:
         t = (self.episode_length_buf.float() + 1) * self.step_dt

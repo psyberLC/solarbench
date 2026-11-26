@@ -29,8 +29,8 @@ class Probe:
     def attach(self, env):
         self.env = env
 
-    def reset(self, env_ids):
-        pass
+    def reset(self, env_ids, work_orders):
+        self.work_orders = dict(zip(env_ids.tolist(), work_orders, strict=True))
 
     def act(self, obs):
         return self.env
@@ -48,7 +48,7 @@ def test_zero_policy_meets_the_contract():
     assert isinstance(policy, Policy) and not layout.privileged
     assert [name for name, _, _ in layout.blocks] == ["clock"]
     assert policy.act({"clock": torch.zeros(3, 2, dtype=torch.int32)}) is None
-    policy.reset(torch.tensor([0, 2]))
+    policy.reset(torch.tensor([0, 2]), ["tighten the bolt", "tighten the bolt"])
 
 
 def test_privileged_is_read_from_the_selection_not_from_the_policy():

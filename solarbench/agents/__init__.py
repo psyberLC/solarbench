@@ -11,7 +11,9 @@ A factory ``f(arg, catalogue) -> Policy`` is given what the task offers and noth
 ``selection`` names the channels it wants. ``act(obs)`` then receives exactly those, as a dict from channel name
 to a tensor with one row per environment (``clock`` is always among them), and returns the R1 argument tensor of
 shape ``(environments, arguments)`` on the same device, or ``None`` to send no command, in which case the robot
-holds. ``reset(env_ids)`` is called with the indices of the environments that just finished an episode.
+holds. ``reset(env_ids, work_orders)`` is called with the indices of the environments that start an episode, once
+for all of them before the first frame and then whenever an episode ends, and the work order of each: the EPISODE
+message of docs/interface.md, the text that states what the job is and what success and damage are judged on.
 
 Whether a result is privileged is read from the selection; a policy cannot declare it. A policy that selects a
 privileged channel is recorded as privileged, and it alone is handed the environment, through ``attach(env)``.
@@ -40,7 +42,7 @@ class Policy(Protocol):
     name: str  # label written to result files
     selection: dict  # the channels it reads (docs/interface.md, section 2)
 
-    def reset(self, env_ids: torch.Tensor) -> None: ...
+    def reset(self, env_ids: torch.Tensor, work_orders: list[str]) -> None: ...
 
     def act(self, obs: dict[str, torch.Tensor]) -> torch.Tensor | None: ...
 
@@ -101,7 +103,7 @@ class ZeroPolicy:
     def __init__(self, catalogue: dict):
         self.selection = select(catalogue)
 
-    def reset(self, env_ids):
+    def reset(self, env_ids, work_orders):
         pass
 
     def act(self, obs):
@@ -121,7 +123,7 @@ class OraclePolicy:
 
         self._oracle = make_oracle(self._task, env)
 
-    def reset(self, env_ids):
+    def reset(self, env_ids, work_orders):
         self._oracle.reset(env_ids)
 
     def act(self, obs):
@@ -138,7 +140,7 @@ class JitPolicy:
     def attach(self, env):
         self._net = torch.jit.load(self._path, map_location=env.device).eval()
 
-    def reset(self, env_ids):
+    def reset(self, env_ids, work_orders):
         if hasattr(self._net, "reset"):  # recurrent exports reset per env; stateless exports take no arguments
             with contextlib.suppress(RuntimeError):
                 self._net.reset(env_ids)
