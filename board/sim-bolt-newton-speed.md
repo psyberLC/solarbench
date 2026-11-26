@@ -6,7 +6,7 @@ milestone: v1
 priority: stretch
 needs: gpu
 size: small
-status: blocked
+status: doing
 owner: psyberLC
 depends_on: [sim-obs-channels]
 touches:
