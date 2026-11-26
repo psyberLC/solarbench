@@ -1,6 +1,7 @@
 """The chat-completions adapter (solarbench.agents.endpoint), against a local stand-in for a model server."""
 
 import json
+import os
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -74,10 +75,15 @@ def frame(layout, ticks, flags=wire.AWAKE, completions=()):
 
 
 @pytest.mark.unit
-def test_only_a_last_line_that_is_a_whole_command_is_a_command():
+def test_only_a_reply_that_ends_with_a_whole_command_is_a_command():
     opcode, args = parse(POSE)
     assert opcode == wire.TOOL_POSE and args == [0.5, 0.0, 0.25, 0.0, 1.0, 0.0, 0.0]  # the quaternion is normalised
     assert parse('{"done": true}') == (wire.DONE, [])
+    # the object may span lines or sit in a code fence, as models write it; thinking left in the text is skipped
+    for reply in ('Lower it.\n{\n  "position": [0.5, 0.0, 0.25],\n  "quaternion": [0, 2, 0, 0]\n}',
+                  '```json\n{"position": [0.5, 0.0, 0.25], "quaternion": [0, 2, 0, 0]}\n```',
+                  '<think>{"done": true}</think>{"position": [0.5, 0.0, 0.25], "quaternion": [0, 2, 0, 0]}'):
+        assert parse(reply) == (opcode, args)
     for reply in ("", "I would move down.", "[1, 2, 3]", '{"position": [0, 0, 0]}',
                   '{"position": [0, 0, NaN], "quaternion": [0, 0, 0, 1]}',
                   '{"position": [0, 0, 0], "quaternion": [0, 0, 0, 0]}',
@@ -102,6 +108,7 @@ def test_a_round_sends_the_fixed_text_first_and_returns_one_record_per_environme
     first = sorted(seen, key=lambda request: request["messages"][1]["content"])[0]
     assert first["path"] == "/v1/chat/completions" and first["key"] == "Bearer not-a-real-key"
     assert (first["model"], first["temperature"], first["seed"]) == ("some/model-27b", 0.2, 7)
+    assert first["chat_template_kwargs"] == {"enable_thinking": True}
     system, work_order, round_1 = first["messages"]
     assert system["content"].startswith(prompts.body(TASK, True)) and '{"done": true}' in system["content"]
     assert work_order == {"role": "user", "content": "work order A"}
@@ -119,7 +126,7 @@ def test_a_round_sends_the_fixed_text_first_and_returns_one_record_per_environme
         "tick 45", "your last command stalled before arriving, 0.0020 m and 0.0100 rad from its target",
         "at its end: force 12.5000 N, torque about tool z 3.2500 N*m"]
     assert policy.calls[0] == [{"wall_s": pytest.approx(0, abs=10), "tokens_read": 900, "tokens_written": 40,
-                                "parsed": True}] * 2
+                                "tokens_cached": None, "finish": None, "parsed": True, "retry": False}] * 2
     assert "not-a-real-key" not in json.dumps([policy.settings, policy.calls])
     assert policy.settings["endpoint"] == "local" and "127.0.0.1" not in json.dumps(policy.settings)
 
@@ -139,21 +146,63 @@ def test_without_force_the_model_is_given_no_force(server):
 
 
 @pytest.mark.unit
-def test_an_unreadable_reply_sends_no_command_and_is_counted(server):
+def test_an_unreadable_reply_is_asked_for_once_more_then_counted_and_the_robot_holds(server):
     seen, replies, _ = server
     policy, layout = make_policy("endpoint:m", CATALOGUE, None)
-    policy.reset([0, 1], ["work order", "work order"])
-    replies += ["I think the bolt is tight.", '{"done": true}']
-    records = policy.act(frame(layout, [0, 0])).numpy().view(wire.COMMAND)[..., 0]
-    assert sorted(records["opcode"].ravel().tolist()) == [wire.NOP, wire.DONE]
-    lost = int(np.argmin(records["opcode"].ravel()))
-    assert [call["parsed"] for call in policy.calls[lost]] == [False]
+    policy.reset([0], ["work order"])
+    replies += ["I think the bolt is tight.", "It is tight."]
+    records = policy.act(frame(layout, [0])).numpy().view(wire.COMMAND)[..., 0]
+    assert records["opcode"].ravel().tolist() == [wire.NOP] and len(seen) == 2
+    assert seen[1]["messages"][-1]["content"].startswith("That reply did not end with a command")
+    assert [(call["parsed"], call["retry"]) for call in policy.calls[0]] == [(False, False), (False, True)]
     seen.clear()
-    asleep = frame(layout, [1, 1])
-    asleep["clock"][1 - lost, 1] = 0  # the other environment has a command running: it is not asked again
-    records = policy.act(asleep).numpy().view(wire.COMMAND)[..., 0]
-    assert len(seen) == 1
+    replies += ["Still thinking.", '{"done": true}']
+    records = policy.act(frame(layout, [1])).numpy().view(wire.COMMAND)[..., 0]
     assert seen[0]["messages"][-1]["content"].startswith("Your last reply did not end with a command")
-    assert records["opcode"].ravel().tolist()[1 - lost] == wire.NOP and records["id"].ravel().tolist()[lost] == 2
-    policy.reset([lost], ["work order"])
-    assert len(policy.finished) == 1 and len(policy.finished[0]) == 2 and policy.calls[lost] == []
+    assert records["opcode"].ravel().tolist() == [wire.DONE] and records["id"].ravel().tolist() == [1]
+    policy.reset([0], ["work order"])
+    assert len(policy.finished) == 1 and len(policy.finished[0]) == 4 and policy.calls[0] == []
+
+
+@pytest.mark.unit
+def test_only_environments_whose_queue_is_empty_are_asked(server):
+    seen, _, _ = server
+    policy, layout = make_policy("endpoint:m", CATALOGUE, None)
+    policy.reset([0, 1], ["work order", "work order"])
+    busy = frame(layout, [5, 5])
+    busy["clock"][1, 1] = 0  # environment 1 has a command running
+    records = policy.act(busy).numpy().view(wire.COMMAND)[..., 0]
+    assert len(seen) == 1 and records["opcode"].ravel().tolist() == [wire.TOOL_POSE, wire.NOP]
+    assert policy.act(frame(layout, [6, 6], flags=0)) is None and len(seen) == 1
+
+
+@pytest.mark.unit
+def test_rounds_are_capped_reasoning_can_be_switched_off_and_each_call_is_logged(server, tmp_path):
+    seen, _, _ = server
+    log = tmp_path / "calls.jsonl"
+    policy, layout = make_policy(f"endpoint:m,reasoning=off,rounds=2,log={log}", CATALOGUE, None)
+    assert policy.name == "endpoint-m-noforce-noreasoning" and policy.settings["reasoning"] is False
+    policy.reset([0], ["work order"])
+    for tick in range(4):
+        policy.act(frame(layout, [tick]))
+    assert len(seen) == 2 and seen[0]["chat_template_kwargs"] == {"enable_thinking": False}
+    lines = [json.loads(line) for line in log.read_text().splitlines()]
+    assert [(line["env"], line["episode_on_env"], line["round"], line["tick"]) for line in lines] == [
+        (0, 0, 1, 0), (0, 0, 2, 1)]
+    assert lines[0]["tokens_read"] == 900 and lines[0]["reply"] == POSE and lines[0]["command"][0] == wire.TOOL_POSE
+    assert "not-a-real-key" not in log.read_text() and "127.0.0.1" not in log.read_text()
+
+
+@pytest.mark.unit
+def test_the_address_comes_from_the_name_or_the_environment(server, monkeypatch):
+    seen, _, _ = server
+    url = os.environ["SOLARBENCH_ENDPOINT_URL"]
+    monkeypatch.delenv("SOLARBENCH_ENDPOINT_URL")
+    policy, layout = make_policy(f"endpoint:m,url={url}", CATALOGUE, None)
+    policy.reset([0], ["work order"])
+    policy.act(frame(layout, [0]))
+    assert len(seen) == 1 and url not in json.dumps(policy.settings)
+    with pytest.raises(ValueError, match="no endpoint"):
+        make_policy("endpoint:m", CATALOGUE, None)
+    with pytest.raises(ValueError, match="got 'm,colour=red'"):
+        make_policy("endpoint:m,colour=red", CATALOGUE, None)
