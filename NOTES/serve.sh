@@ -5,12 +5,12 @@
 #   NOTES/serve.sh --daemon   run in the background, log to ~/llm/server.log, wait until it answers
 #   BUDGET=8192 PARALLEL=1 NOTES/serve.sh --daemon   a longer thinking cap and one conversation (viewer runs);
 #                                                    the defaults are the settings of the laptop experiment
-#   MODEL=<path to a .gguf> TOP_P=0.95 NOTES/serve.sh --daemon   another model (e.g. Nemotron 3.5 Lightning, whose
+#   CTX=131072 for a longer context (kept thinking); MODEL=<path to a .gguf> TOP_P=0.95 NOTES/serve.sh --daemon   another model (e.g. Nemotron 3.5 Lightning, whose
 #                                                    card gives top-p 0.95); default Nemotron 3 Nano, top-p 1.0
 set -euo pipefail
 MODEL=${MODEL:-$HOME/llm/models/NVIDIA-Nemotron-3-Nano-30B-A3B-Q4_K_M.gguf}
 ARGS=(-m "$MODEL" --host 127.0.0.1 --port 8080 --jinja
-      --parallel "${PARALLEL:-4}" --ctx-size 81920
+      --parallel "${PARALLEL:-4}" --ctx-size "${CTX:-81920}"
       -ngl 99 --n-cpu-moe 50
       --top-p "${TOP_P:-1.0}" --top-k 0 --min-p 0
       --reasoning-budget "${BUDGET:-2048}")

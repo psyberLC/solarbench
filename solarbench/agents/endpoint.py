@@ -4,6 +4,7 @@ Where the model runs is a URL. A local server for open weights and a remote serv
 Settings come with the policy name, or else from the environment variable named beside each:
     --policy endpoint:<model>[,wrench=on][,reasoning=on][,temperature=0][,max_tokens=4096][,seed=0][,rounds=40]
                              [,log=<file.jsonl>][,url=<base url>][,commands=pose][,privileged=off][,notes=<file>]
+                             [,keep_thinking=off]
     SOLARBENCH_ENDPOINT_URL        the server's base address, ending in /v1 (or url=)
     SOLARBENCH_ENDPOINT_LOG        a JSON-lines file that gets one line per call (or log=)
     SOLARBENCH_ENDPOINT_KEY        sent as a bearer token if set; never stored, logged or written to a result
@@ -17,6 +18,9 @@ the tool, the bolt's axis and angle, installed and drive torque, whether the soc
 how far off the axis and how tilted the socket is. The result is then marked privileged.
 ``notes=<file>`` appends that text file to the system message (advice written for the model, such as lessons from
 earlier attempts); the result records the file's name.
+``keep_thinking=on`` sends the model's earlier thinking back with its earlier replies and asks the chat template to
+keep it (``truncate_history_thinking`` off), so it need not work everything out again each round. The conversation
+then grows by each round's thinking: cap it with the server's thinking budget and ``rounds``.
 
 What the model reads: the description of its body and how to reply (the system message), the work order, then one
 message per round with the selected channels as text. Its own earlier replies stay in the conversation, so each
@@ -97,7 +101,7 @@ ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED
          wire.INVALID: "was refused: invalid argument", wire.FULL: "was refused: queue full"}
 ENCODING = "text, 4 decimals"
 OPTIONS = {"wrench": "off", "reasoning": "on", "temperature": "0", "max_tokens": "4096", "seed": "0", "rounds": "40",
-           "log": "", "url": "", "commands": "pose", "privileged": "off", "notes": ""}
+           "log": "", "url": "", "commands": "pose", "privileged": "off", "notes": "", "keep_thinking": "off"}
 _DECODER = json.JSONDecoder()
 
 
@@ -281,7 +285,8 @@ class EndpointPolicy:
                          "reasoning": reasoning, "temperature": float(options["temperature"]),
                          "max_tokens": int(options["max_tokens"]), "seed": int(options["seed"]),
                          "rounds": int(options["rounds"]), "commands": options["commands"], "privileged": privileged,
-                         "notes": os.path.basename(options["notes"])}
+                         "notes": os.path.basename(options["notes"]),
+                         "keep_thinking": options["keep_thinking"] == "on"}
         self._catalogue, self._layout = catalogue, wire.Layout(catalogue, self.selection)
         notes = "\n" + Path(options["notes"]).read_text() if options["notes"] else ""
         self._system = (prompts.body(catalogue["task"], wrench) + (REPLY_ASSIST if self._assist else REPLY)
@@ -311,7 +316,8 @@ class EndpointPolicy:
         s = self.settings
         body = {"model": s["model"], "messages": messages, "temperature": s["temperature"],
                 "max_tokens": s["max_tokens"], "seed": s["seed"],
-                "chat_template_kwargs": {"enable_thinking": s["reasoning"]}}
+                "chat_template_kwargs": {"enable_thinking": s["reasoning"],
+                                         **({"truncate_history_thinking": False} if s["keep_thinking"] else {})}}
         headers = {"Content-Type": "application/json"}
         if key := os.environ.get("SOLARBENCH_ENDPOINT_KEY"):
             headers["Authorization"] = f"Bearer {key}"
@@ -338,7 +344,8 @@ class EndpointPolicy:
             choice = answer["choices"][0]
             message = choice["message"]
             reply, thought = message.get("content") or "", message.get("reasoning_content") or ""
-            messages.append({"role": "assistant", "content": reply})
+            kept = {"reasoning_content": thought} if self.settings["keep_thinking"] and thought else {}
+            messages.append({"role": "assistant", "content": reply, **kept})
             command, usage = parse(reply, pose), answer.get("usage", {})
             call = {"wall_s": time.perf_counter() - started, "tokens_read": usage.get("prompt_tokens"),
                     "tokens_written": usage.get("completion_tokens"),

@@ -284,3 +284,14 @@ def test_notes_are_appended_to_the_system_message(tmp_path):
     notes.write_text("## Notes\nPress lightly.\n")
     policy, _ = make_policy(f"endpoint:m,url=http://x/v1,notes={notes}", CATALOGUE, None)
     assert policy._system.endswith("## Notes\nPress lightly.\n") and policy.settings["notes"] == "lessons.md"
+
+
+@pytest.mark.unit
+def test_kept_thinking_goes_back_with_the_reply_and_the_template_is_told(server):
+    seen, replies, _ = server
+    policy, layout = make_policy("endpoint:m,keep_thinking=on", CATALOGUE, None)
+    policy.reset(torch.arange(1), ["work order"])
+    policy._ask(0, "state 1", 0)
+    policy._ask(0, "state 2", 1)
+    assert seen[-1]["chat_template_kwargs"] == {"enable_thinking": True, "truncate_history_thinking": False}
+    assert policy.settings["keep_thinking"] is True
