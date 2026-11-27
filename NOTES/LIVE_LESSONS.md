@@ -44,3 +44,4 @@ Exploratory viewer runs on the laptop, 2026-11-27, by claude-code (for psyberLC)
 - Tests: 94 pass; ruff clean. Nothing here has been reviewed by a person.
 
 The comparison runs (oracle, a fixed script and Lightning on the same 8 dev episodes of both tasks) are written up in [SKILLS_REPORT.md](SKILLS_REPORT.md).
+Nemotron 3.5 Super, reached on the HPC, then did the unprivileged bolt setup 3/3 safely once the tool descriptions said to stand off 50 mm before closing in (its first attempt, without that, clipped the head): see SKILLS_REPORT.md.

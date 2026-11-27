@@ -41,6 +41,12 @@ Lightning: 32 calls (4 per episode, the shortest possible: grasp, unplug, plug_i
 - **One skill flaw it exposed:** in episode 4 `tighten_to` crawled for 15 s and stopped at 4.3 N·m. Without privilege it slows from 2 N·m of sensed torque to sample the sensor's range; a reading that high before snug makes it crawl through the run-down. The fixed script never met this.
 - **On the humanoid, ordering four skills is easy for it:** 8/8, the minimal 4 calls each, short thinking. The phase skills cost about 1 s against the oracle (a held tick at each skill boundary) and once tipped an episode into a failed re-latch.
 
+## Nemotron 3.5 Super on the bolt (viewer, 3 episodes)
+Later the same day, `nemotron-3.5-super-vl` (Nemotron 3.5 Super VL 120B-A12B, served by vLLM on RTU's HPC and reached over HTTPS; quantisation and server settings not recorded here) drove the same unprivileged bolt setup in the viewer, dev episodes 0–2, the task's 30 s limit, thinking on, temperature 1.0 (top-p the server's default). Recordings: `live-runs/super-arm/` and the first attempt `live-runs/super-arm-unguided/`.
+- **First attempt, stopped after 2 episodes:** it aimed straight from the start pose to 0.5 mm off the head, which clipped the head and jammed the socket askew; seat failed twice and the time ran out. The tool descriptions had never said to stand off first. Lightning's two safe report episodes and the fixed script all had.
+- **With `aim` and `seat` saying to stop 50 mm out first: 3/3 safe success** (`privileged: false`), the same 6 calls each (stand off, close in, seat, tighten_to(16), unload, retract(50)), installed 15.97, 15.99, 16.06 N·m, released at 15.7, 20.9, 18.0 s. Calls took 1.0–16.6 s (99–2,529 tokens), most under 3 s.
+Three episodes are not a rate, and Lightning has not been rerun with the corrected descriptions, so the two models are not compared here.
+
 ## What this does not show
 - Anything about controlling a robot without skills: there, on the same bolt task, Nemotron 3 Nano and 3.5 Lightning never succeeded safely in `NOTES/REPORT.md` and `LIVE_LESSONS.md`.
 - Anything about the humanoid without privileged data (impossible as the task is built).
