@@ -1,19 +1,29 @@
 """Tables for NOTES/SKILLS_REPORT.md, read from the result files and call logs of NOTES/report_runs.sh.
 
-  .venv/bin/python NOTES/report_tables.py > NOTES/report-runs/tables.md
+  .venv/bin/python NOTES/report_tables.py [NOTES/report-runs] > NOTES/report-runs/tables.md
 """
 
 import json
 import pathlib
 import statistics
+import sys
 
-ROOT = pathlib.Path(__file__).parent / "report-runs"
-RUNS = [("t3-oracle", "oracle (scripted, privileged)"),
-        ("t3-script-unprivileged", "skills, fixed sequence, unprivileged"),
-        ("t3-lightning-unprivileged", "skills, Nemotron 3.5 Lightning, unprivileged"),
-        ("t2-oracle", "oracle (scripted, privileged)"),
-        ("t2-script-privileged", "phase skills, fixed sequence, privileged"),
-        ("t2-lightning-privileged", "phase skills, Nemotron 3.5 Lightning, privileged")]
+ROOT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(__file__).parent / "report-runs"
+MODELS = {"lightning": "Nemotron 3.5 Lightning", "super": "Nemotron 3.5 Super"}
+
+
+def label(name: str) -> str:
+    kind = "skills" if name.startswith("t3") else "phase skills"
+    if name.endswith("oracle"):
+        return "oracle (scripted, privileged)"
+    privilege = "unprivileged" if name.endswith("unprivileged") else "privileged"
+    brain = "fixed sequence" if "-script-" in name else MODELS.get(name.split("-")[1], name.split("-")[1])
+    return f"{kind}, {brain}, {privilege}"
+
+
+ORDER = ("oracle", "script", "lightning", "super")
+RUNS = sorted(((d.name, label(d.name)) for d in ROOT.iterdir() if d.is_dir() and d.name[:2] in ("t2", "t3")),
+              key=lambda r: (r[0][:2] != "t3", next(i for i, k in enumerate(ORDER) if k in r[0])))
 
 
 def result(name: str) -> dict | None:
@@ -45,7 +55,7 @@ for task in ("T3", "T2"):
     print()
     for name, label, r in rows:
         calls_file = ROOT / name / "calls.jsonl"
-        if "Lightning" not in label or not calls_file.exists():
+        if "Nemotron" not in label or not calls_file.exists():
             continue
         calls = [json.loads(line) for line in calls_file.read_text().splitlines() if line.strip()]
         per, episode = {}, -1
