@@ -11,6 +11,7 @@
 #             key goes in SOLARBENCH_ENDPOINT_KEY, which the adapter sends and never stores
 #   HOST      remote when the model runs elsewhere (recorded in the result's endpoint field)
 #   TEMP      sampling temperature with thinking (default 0.6)
+#   TASKS     which tasks to run, of T3 and T2 (default both)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 OUT=${OUT:-NOTES/report-runs}
@@ -18,6 +19,7 @@ EPISODES=${EPISODES:-8}
 MODEL=${MODEL:-NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_0}
 UPSTREAM=${UPSTREAM:-http://127.0.0.1:8080}
 TEMP=${TEMP:-0.6}
+TASKS=${TASKS:-T3 T2}
 SHORT=$(echo "$MODEL" | tr 'A-Z' 'a-z' | sed 's/.*nemotron-3.5-//; s/-.*//')  # lightning, super
 T3=SolarBench-T3-ClampTighten-UR16e-R2-v0
 T2=SolarBench-T2-MC4-G1-v0
@@ -43,11 +45,15 @@ run() {  # name task policy [script:<caller args> | proxy]
     grep -aE "^==|success|damage|sim_error" "$dir/run.log"
 }
 
+if [[ " $TASKS " == *" T3 "* ]]; then
 run t3-oracle "$T3" oracle
 run t3-script-unprivileged "$T3" "endpoint:scripted,wrench=on,reasoning=off,tools=on,skills=on,rounds=20" "script:"
 run "t3-$SHORT-unprivileged" "$T3" "endpoint:$MODEL,wrench=on,reasoning=on,temperature=$TEMP,max_tokens=12288,rounds=30,tools=on,skills=on${HOST:+,host=$HOST}" proxy
+fi
+if [[ " $TASKS " == *" T2 "* ]]; then
 run t2-oracle "$T2" oracle
 run t2-script-privileged "$T2" "phases:scripted,notes=NOTES/probes/job_mc4.md,reasoning=off" \
     "script:--plan grasp,unplug,plug_in,release,done"
 run "t2-$SHORT-privileged" "$T2" "phases:$MODEL,notes=NOTES/probes/job_mc4.md,temperature=$TEMP" proxy
+fi
 echo "$(date -Is) all runs attempted"

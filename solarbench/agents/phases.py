@@ -137,40 +137,54 @@ class PhasesPolicy:
         self._call[env] = None
         return None
 
+    def _may_ask(self, env: int) -> bool:
+        return sum(not c["retry"] for c in self.calls[env]) < self.settings["rounds"] and self._call[env] != "done"
+
+    def _start(self, env: int, name: str | None) -> None:
+        if name in SKILLS:
+            self._oracle.phase[env], self._oracle.timer[env] = SKILLS[name][0], 0.0
+            self._skill[env] = (name, 0.0)
+        elif name == "done":
+            self._call[env] = "done"
+
     def act(self, obs):
+        """A skill ends on the tick the oracle moves past its last phase, and the model is asked on that same tick
+        (the simulation waits). If it chooses the step the oracle was already starting, that tick runs the oracle's
+        action for it, so a run of the natural order moves exactly as the oracle does; any other choice holds the
+        robot still for that tick. A tick of hold at each boundary was enough to make a few insertions jam on the
+        sleeve's rim (NOTES/probes/phases_probe.py)."""
         e, n = self._env, self._env.num_envs
         action = torch.zeros(n, 8, device=e.device)
         action[:, 7] = -1.0
-        running = [env for env in range(n) if self._skill[env] is not None]
-        if running:
-            full = self._oracle.act()  # advances the oracle's phases; only running environments use its action
+        for env in range(n):  # no skill running (the episode's start, or after a call that started none): ask first
+            if self._skill[env] is None and self._may_ask(env):
+                self._start(env, self._ask(env, ""))
+        full = self._oracle.act() if any(s is not None for s in self._skill) else None
         for env in range(n):
             skill = self._skill[env]
-            if skill is not None:
-                name, seconds = skill
-                first, last, limit = SKILLS[name]
-                if int(self._oracle.phase[env]) <= last and seconds < limit:
-                    action[env] = full[env]
-                    self._grip[env] = full[env, 6]
-                    self._skill[env] = (name, seconds + e.step_dt)
-                    continue
-                self._skill[env] = None
-                ended = "finished" if int(self._oracle.phase[env]) > last else f"stopped by its {limit:.0f} s limit"
-                text = f"{name} {ended}\n" + self._state(env)
-            else:
-                text = ""
-            if sum(not c["retry"] for c in self.calls[env]) >= self.settings["rounds"] or (
-                    skill is None and self.calls[env] and self._call[env] == "done"):
+            if skill is None:
                 action[env, 6] = self._grip[env]
                 continue
-            name = self._ask(env, text)
-            if name in SKILLS:
-                self._oracle.phase[env], self._oracle.timer[env] = SKILLS[name][0], 0.0
-                self._skill[env] = (name, 0.0)
-            elif name == "done":
-                self._call[env] = "done"
-            action[env, 6] = self._grip[env]
+            name, seconds = skill
+            first, last, limit = SKILLS[name]
+            phase = int(self._oracle.phase[env])
+            if phase <= last and seconds < limit:
+                action[env] = full[env]
+                self._grip[env] = full[env, 6]
+                self._skill[env] = (name, seconds + e.step_dt)
+                continue
+            self._skill[env] = None
+            ended = "finished" if phase > last else f"stopped by its {limit:.0f} s limit"
+            if name == "plug_in" and phase > last and not bool(e.latch.latched[env]):
+                ended = "ended without the latch engaging"
+            chosen = self._ask(env, f"{name} {ended}\n" + self._state(env)) if self._may_ask(env) else None
+            self._start(env, chosen)
+            if chosen in SKILLS and phase > last and SKILLS[chosen][0] == phase:
+                action[env] = full[env]
+                self._grip[env] = full[env, 6]
+                self._skill[env] = (chosen, e.step_dt)
+            else:
+                action[env, 6] = self._grip[env]
         return action
-
 
 register("phases")(PhasesPolicy)
