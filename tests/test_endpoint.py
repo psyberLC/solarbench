@@ -325,3 +325,10 @@ def test_with_tools_each_state_is_the_result_of_the_last_call_and_thinking_stays
     assert sent[3]["role"] == "tool" and sent[3]["tool_call_id"] == "c1"
     assert (seen[1]["seed"], seen[2]["seed"]) == (0, 1)
     assert parse_call({"function": {"name": "turn", "arguments": "not json"}}, (np.zeros(3), np.eye(4)[3])) is None
+
+
+@pytest.mark.unit
+def test_thinking_is_read_under_either_field_name():
+    from solarbench.agents.endpoint import _thought
+
+    assert _thought({"reasoning_content": "a"}) == "a" and _thought({"reasoning": "b"}) == "b" and _thought({}) == ""

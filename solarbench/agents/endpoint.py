@@ -222,6 +222,11 @@ def parse(reply: str, pose: tuple[np.ndarray, np.ndarray] | None = None) -> tupl
     return _command(_last_object(reply), pose)
 
 
+def _thought(message: dict) -> str:
+    """The model's thinking: llama.cpp calls the field reasoning_content, newer vLLM calls it reasoning."""
+    return message.get("reasoning_content") or message.get("reasoning") or ""
+
+
 def parse_call(call: dict, pose: tuple[np.ndarray, np.ndarray]) -> tuple[int, list[float]] | None:
     """The command a native tool call asks for (``tools=on``), or ``None`` if it names no tool or its arguments
     cannot be read."""
@@ -411,7 +416,7 @@ class EndpointPolicy:
             answer = self._post(messages)
             choice = answer["choices"][0]
             message = choice["message"]
-            reply, thought = message.get("content") or "", message.get("reasoning_content") or ""
+            reply, thought = message.get("content") or "", _thought(message)
             kept = {"reasoning_content": thought} if self.settings["keep_thinking"] and thought else {}
             messages.append({"role": "assistant", "content": reply, **kept})
             command, usage = parse(reply, pose), answer.get("usage", {})
@@ -442,7 +447,7 @@ class EndpointPolicy:
             answer = self._post(messages, retry)
             choice = answer["choices"][0]
             message = choice["message"]
-            reply, thought = message.get("content") or "", message.get("reasoning_content") or ""
+            reply, thought = message.get("content") or "", _thought(message)
             tool_calls = message.get("tool_calls") or []
             command, usage = parse_call(tool_calls[0], pose) if tool_calls else None, answer.get("usage", {})
             call = {"wall_s": time.perf_counter() - started, "tokens_read": usage.get("prompt_tokens"),
