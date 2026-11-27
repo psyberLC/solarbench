@@ -275,6 +275,7 @@ def test_privileged_readings_are_read_by_name_and_give_depth_offset_and_tilt():
     # the last pose asked for 0.5 mm to one side of the axis and the socket settled 1 mm to the other: aim 1.5 mm over
     text = describe(catalogue, layout, frame, 0, None, target=np.array([0.0015, 0.0, 0.0]))
     assert '"aim": [0.00250, 0.00000, 0.00450]' in text  # 0.5 mm out from the head top (z 4 mm), shifted by the error
+    assert '50 mm out from the head top on the axis: {"aim": [0.00250, 0.00000, 0.05400]' in text
 
 
 @pytest.mark.unit

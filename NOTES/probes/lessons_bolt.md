@@ -1,13 +1,21 @@
-## Notes from earlier attempts at this job
-Success matters more than speed: never go above 18 N·m installed torque and never force a jammed socket. These notes come from attempts that succeeded; the bolt and the angle of its flats may differ from theirs. Each round's readings already give the head top's position, the socket's depth in words, and two ready centring commands; copy those rather than working the numbers out yourself. A point d metres out from the head top on the axis is head top centre + d * bolt_axis, and the socket must point into the bolt (socket_toward = minus bolt_axis).
+## What to send each round
+Go down this table and send the command of the FIRST row whose condition is true now. Do not skip rows, do not go back to earlier rows' reasons, and do not reconsider once a row matches: the table was worked out from attempts that succeeded on this job. "Ready" commands are printed in every round's readings; copy them exactly. "Depth" means how far the head top is inside the socket (negative: the face is short of it). Angles are in degrees unless marked rad.
 
-Keep a log. Your thinking is not kept from one round to the next, but your replies are. So begin every reply with one line starting "Log:" that records what the last command showed and what you are doing next, with the wrist 3 angle (joint_pos, last value) and, while searching for the flats, every angle you have tried and how deep the head went there. Its form is "Log: phase <approach, centre, search, seat, run down, tighten or release>; last result <what the readings now say>; tried <angles and depths so far>; next <what you send now and why>". Fill it from this round's readings, never copy an earlier line, and follow the numbered steps in order: there is nothing to search for until the socket is centred just off the head top. Read your earlier Log lines before deciding. Then end the reply with the command, as one line of JSON.
+| Row | If now | Send |
+|---|---|---|
+| 1 | installed torque >= 14 N·m and the face is more than 30 mm short of the head top | {"done": true} |
+| 2 | installed torque >= 14 N·m and drive torque > 0.1 N·m | {"turn_deg": -(0.15 × drive torque + 0.6)} |
+| 3 | installed torque >= 14 N·m | the ready "put it 50 mm out" command |
+| 4 | engaged = 1 and bolt_angle >= -0.06 rad | {"turn_deg": T} with T = 31 − 1.75 × installed torque, at most 20 |
+| 5 | engaged = 1 | {"push_mm": P, "turn_deg": T} with P = 5 − depth in mm (0 if negative) and T = (−bolt_angle in degrees) − 2, at most 90 |
+| 6 | depth > 1.5 mm | {"push_mm": 5 − depth in mm} |
+| 7 | the face is more than 10 mm short of the head top, or the offset from the axis is more than 3 mm | the ready "put it 50 mm out" command, then next round row 8 |
+| 8 | the face is more than 1 mm short of the head top, or the offset is more than 0.2 mm, or the tilt is more than 0.5° | the ready "centre it 0.5 mm out from the head top" command |
+| 9 | wrist 3 (last joint_pos) is above 4.5 rad | {"turn_deg": -60} |
+| 10 | you have not yet pushed at this wrist 3 angle (within 0.02 rad; see your Log) | {"push_mm": 1.5 + how far the face is short of the head top, in mm (0 if the head is inside)} |
+| 11 | you have pushed at this wrist 3 angle | {"turn_deg": 4} if that push left the head 0.15 mm or more inside, else {"turn_deg": 10} |
 
-1. Approach: aim 0.030 m out from the head top on the axis (a long move straight to the head can clip it). Then send the ready "centre it 0.5 mm out from the head top" command.
-2. Centre: the socket only drops onto the head within about 0.2 mm of the axis, and the arm settles a little off its target. Whenever the offset is over 0.2 mm, send one of the ready centring commands (they allow for that error).
-3. Find the flats. They repeat every 60 degrees and the socket drops on only within a few degrees. Turning while pressing drags the socket off the axis, so until it is seated do not press and turn in one command. Alternate: {"turn_deg": a} alone, then {"push_mm": d} with d = 1.5 mm plus however far the face is short of the head top. If the push arrives and the head is then more than about 1.5 mm inside the socket, the flats lined up. While blocked, how far the head sits inside is a hint: about 0.0-0.1 mm means far from lined up, 0.2-0.6 mm means close. Step about 10 degrees when far, 3-5 when close. Re-centre (step 2) whenever the offset passes 0.2 mm.
-4. Seat: push on until the head is about 5 mm inside the socket. engaged becomes 1.
-5. Run down: bolt_angle (radians, 0 at snug) says how far is left. Turn in large steps, up to 90 degrees per command; once seated you may add a light press, e.g. {"push_mm": 1.0, "turn_deg": 64}. Stop about 5 degrees short of snug.
-6. Tighten past snug: the installed torque rose about 0.57 N·m per degree of bolt turn, and the wrist lagged its command by about 0.29 degrees per N·m. Take one step of about 15-20 degrees, measure the slope, then plan the remaining one or two steps to land at 15-16 N·m. Never exceed 18.
-7. Release: first small reverse turns until drive_torque is under 0.1 N·m (about -0.13 degrees per N·m of drive torque, then another -1 degree; 0.7 N·m still grips the flats and jams the lift). Then aim 0.050 m out from the head top on the axis, socket pointing into the bolt (not push_mm, which follows the socket's own, possibly tilted, axis). Then send {"done": true}.
-8. Wrist 3 has about +-6.28 rad of travel (joint_pos, last value); make sure it leaves room for about 200-300 degrees of turning.
+Why, briefly (no need to re-derive): the socket drops onto the head only when centred within about 0.2 mm and the hex flats line up (they repeat every 60°, window of a few degrees), which rows 8, 10 and 11 search for; turning while pressing before it is seated drags it off the axis, so rows 10 and 11 never combine them; once seated, rows 5 and 4 run the bolt down and tighten it, and row 4's T lands near 15.5 N·m in two steps; rows 2 and 3 unload the wrist and lift along the axis, because a loaded or tilted socket jams on the head.
+
+## Log
+Your thinking is not kept between rounds, but your replies are. Begin every reply with one line: "Log: row <n>; wrist <wrist 3 rad>; depth <mm>; offset <mm>; pushes so far <list of wrist angle: depth reached>". Copy the "pushes so far" list from your previous Log line and add to it when your last command was a push. Then end the reply with the command as one line of JSON, and nothing after it.

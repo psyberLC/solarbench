@@ -86,9 +86,9 @@ Each round also gives what a scripted controller with full knowledge of the simu
 - engaged: 1 while the socket counts as seated on the head, 0 otherwise.
 - where the top of the head is, how deep the socket is on it (said in words), how far and which way the socket is \
 off the bolt's axis, and the angle between them.
-- two ready commands: one that centres the socket on the bolt's axis where it is now, and one that centres it 0.5 mm \
-out from the head top. Both point the socket into the bolt and allow for where your last pose actually left the \
-socket (the arm settles a little off its target, consistently the same way).
+- three ready commands: one that centres the socket on the bolt's axis where it is now, one that centres it 0.5 mm \
+out from the head top, and one that puts it 50 mm out on the axis. All point the socket into the bolt and allow for \
+where your last pose actually left the socket (the arm settles a little off its target, consistently the same way).
 """
 AGAIN = 'That reply did not end with a command that could be read. Send only the line of JSON.'
 UNREAD = "Your last reply did not end with a command that could be read.\n"
@@ -219,7 +219,7 @@ def by_field(catalogue: dict, channel: str) -> dict:
 
 
 def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int, target: np.ndarray | None) -> list[str]:
-    """Where the socket is on the head, from the privileged channel, and two ready centring commands. ``target`` is
+    """Where the socket is on the head, from the privileged channel, and three ready aims along the axis. ``target`` is
     the position the last pose command asked for: the gap between it and where the socket settled is carried into
     the suggested aims, as an integrator would."""
     fields, row = by_field(catalogue, "policy"), frame["policy"][env]
@@ -248,7 +248,8 @@ def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int, target: np
             f"{fmt(side, 1e3, 2)} mm from the axis, base frame)",
             f"socket axis tilted from the bolt axis: {tilt:.2f} deg",
             f"to centre the socket on the axis where it is now: {aim(-depth)}",
-            f"to centre it 0.5 mm out from the head top: {aim(0.0005)}"]
+            f"to centre it 0.5 mm out from the head top: {aim(0.0005)}",
+            f"to put it 50 mm out from the head top on the axis: {aim(0.050)}"]
 
 
 class EndpointPolicy:
