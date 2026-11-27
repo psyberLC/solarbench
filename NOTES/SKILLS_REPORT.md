@@ -47,6 +47,9 @@ Later the same day, `nemotron-3.5-super-vl` (Nemotron 3.5 Super VL 120B-A12B, se
 - **With `aim` and `seat` saying to stop 50 mm out first: 3/3 safe success** (`privileged: false`), the same 6 calls each (stand off, close in, seat, tighten_to(16), unload, retract(50)), installed 15.97, 15.99, 16.06 N·m, released at 15.7, 20.9, 18.0 s. Calls took 1.0–16.6 s (99–2,529 tokens), most under 3 s.
 Three episodes are not a rate, and Lightning has not been rerun with the corrected descriptions, so the two models are not compared here.
 
+## Nemotron 3.5 Super on the humanoid (viewer, 3 episodes)
+The same endpoint drove the connector task's phase skills (privileged by necessity, as above), dev episodes 0–2, temperature 1.0: **3/3 safe success**, the minimal 4 calls each (grasp, unplug, plug_in, release), 51–270 tokens and 0.7–1.7 s per call, released at 7.0, 7.0 and 5.1 s. Recording: `live-runs/super-humanoid/`. As with Lightning, this tests ordering four named steps, which both models do without error.
+
 ## What this does not show
 - Anything about controlling a robot without skills: there, on the same bolt task, Nemotron 3 Nano and 3.5 Lightning never succeeded safely in `NOTES/REPORT.md` and `LIVE_LESSONS.md`.
 - Anything about the humanoid without privileged data (impossible as the task is built).
