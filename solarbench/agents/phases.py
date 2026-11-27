@@ -17,12 +17,11 @@ import os
 import pathlib
 import threading
 import time
-import urllib.error
-import urllib.request
 
 import torch
 
 from solarbench.agents import register, select
+from solarbench.agents.endpoint import post
 
 # T2's oracle phases (solarbench/oracle/mc4_oracle.py, PHASES), grouped into skills: (first, last, time limit s)
 SKILLS = {"grasp": (0, 2, 10.0), "unplug": (3, 5, 9.0), "plug_in": (6, 7, 8.0), "release": (8, 9, 4.0)}
@@ -113,12 +112,7 @@ class PhasesPolicy:
             body = {"model": s["model"], "messages": messages, "tools": TOOLS, "temperature": s["temperature"],
                     "max_tokens": s["max_tokens"], "seed": s["seed"] + retry,
                     "chat_template_kwargs": {"enable_thinking": s["reasoning"]}}
-            headers = {"Content-Type": "application/json"}
-            if key := os.environ.get("SOLARBENCH_ENDPOINT_KEY"):
-                headers["Authorization"] = f"Bearer {key}"
-            request = urllib.request.Request(self._url, json.dumps(body).encode(), headers)
-            with urllib.request.urlopen(request, timeout=1800) as response:
-                answer = json.load(response)
+            answer = post(self._url, body)
             message = answer["choices"][0]["message"]
             reply = message.get("content") or ""
             thought = message.get("reasoning_content") or message.get("reasoning") or ""

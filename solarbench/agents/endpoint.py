@@ -364,6 +364,34 @@ def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int, target: np
             f"to put it 50 mm out from the head top on the axis: {aim(0.050)}"]
 
 
+WAIT_S = 30.0
+
+
+def post(url: str, body: dict) -> dict:
+    """One chat-completions request. A server that is restarting gets a minute, and one that says it is busy (429)
+    gets ten waits; any other error it answers with stops the run."""
+    headers = {"Content-Type": "application/json"}
+    if key := os.environ.get("SOLARBENCH_ENDPOINT_KEY"):
+        headers["Authorization"] = f"Bearer {key}"
+    request = urllib.request.Request(url, json.dumps(body).encode(), headers)
+    unreachable = busy = 0
+    while True:
+        try:
+            with urllib.request.urlopen(request, timeout=1800) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            busy += 1
+            if error.code != 429 or busy > 10:
+                raise
+            after = error.headers.get("Retry-After", "")
+            time.sleep(float(after) if after.isdigit() else WAIT_S)
+        except (urllib.error.URLError, ConnectionError):
+            unreachable += 1
+            if unreachable > 2:
+                raise
+            time.sleep(WAIT_S)
+
+
 class EndpointPolicy:
     def __init__(self, arg: str, catalogue: dict):
         model, *given = arg.split(",")
@@ -443,21 +471,7 @@ class EndpointPolicy:
                 **({"tools": TOOLS + (skills.tools() if self._skills else [])} if self._tools else {}),
                 "chat_template_kwargs": {"enable_thinking": s["reasoning"],
                                          **({"truncate_history_thinking": False} if s["keep_thinking"] else {})}}
-        headers = {"Content-Type": "application/json"}
-        if key := os.environ.get("SOLARBENCH_ENDPOINT_KEY"):
-            headers["Authorization"] = f"Bearer {key}"
-        request = urllib.request.Request(self._url, json.dumps(body).encode(), headers)
-        for attempt in range(3):  # a server that is restarting gets a minute; an error it answers with stops the run
-            try:
-                with urllib.request.urlopen(request, timeout=1800) as response:
-                    return json.load(response)
-            except urllib.error.HTTPError:
-                raise
-            except (urllib.error.URLError, ConnectionError):
-                if attempt == 2:
-                    raise
-                time.sleep(30)
-        raise AssertionError("unreachable")
+        return post(self._url, body)
 
     def _ask(self, env: int, text: str, tick: int, pose=None) -> tuple[int, list[float]] | None:
         if self._tools:

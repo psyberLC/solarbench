@@ -3,6 +3,7 @@
 import json
 import os
 import threading
+import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
@@ -339,3 +340,35 @@ def test_a_tunnelled_endpoint_can_be_recorded_as_remote():
     policy, _ = make_policy("endpoint:m,url=http://127.0.0.1:8000/v1,host=remote", CATALOGUE, None)
     assert policy.settings["endpoint"] == "remote"
     assert make_policy("endpoint:m,url=http://127.0.0.1:8000/v1", CATALOGUE, None)[0].settings["endpoint"] == "local"
+
+
+@pytest.mark.unit
+def test_a_busy_server_is_waited_for_and_other_errors_stop_the_run(monkeypatch):
+    from solarbench.agents import endpoint
+
+    codes = [429, 429, 200, 500]
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            code, data = codes.pop(0), b'{"choices": []}'
+            self.send_response(code)
+            if code == 429:
+                self.send_header("Retry-After", "0")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, *args):
+            pass
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    monkeypatch.setattr(endpoint, "WAIT_S", 0.0)
+    url = f"http://127.0.0.1:{httpd.server_port}/v1/chat/completions"
+    try:
+        assert endpoint.post(url, {}) == {"choices": []} and codes == [500]
+        with pytest.raises(urllib.error.HTTPError):
+            endpoint.post(url, {})
+    finally:
+        httpd.shutdown()
