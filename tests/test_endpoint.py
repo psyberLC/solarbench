@@ -11,7 +11,7 @@ import torch
 
 from solarbench import wire
 from solarbench.agents import make_policy, prompts
-from solarbench.agents.endpoint import parse
+from solarbench.agents.endpoint import parse, parse_call
 
 TASK = "SolarBench-T3-ClampTighten-UR16e-R2-v0"
 CATALOGUE = {
@@ -43,7 +43,8 @@ def server(monkeypatch):
             seen.append({"path": self.path, "key": self.headers.get("Authorization"), **body})
             if together:
                 together[0].wait()  # answers only once that many requests are in flight at the same time
-            answer = {"choices": [{"message": {"content": replies.pop(0) if replies else POSE}}],
+            reply = replies.pop(0) if replies else POSE  # a reply text, or a whole message (tool calls)
+            answer = {"choices": [{"message": reply if isinstance(reply, dict) else {"content": reply}}],
                       "usage": {"prompt_tokens": 900, "completion_tokens": 40}}
             data = json.dumps(answer).encode()
             self.send_response(200)
@@ -295,3 +296,32 @@ def test_kept_thinking_goes_back_with_the_reply_and_the_template_is_told(server)
     policy._ask(0, "state 2", 1)
     assert seen[-1]["chat_template_kwargs"] == {"enable_thinking": True, "truncate_history_thinking": False}
     assert policy.settings["keep_thinking"] is True
+
+
+@pytest.mark.unit
+def test_with_tools_each_state_is_the_result_of_the_last_call_and_thinking_stays(server):
+    seen, replies, _ = server
+    catalogue = json.loads(json.dumps(CATALOGUE))
+    catalogue["channels"][1] = {"id": 2, "name": "proprio", "dtype": "f4", "shape": [7], "fields": [
+        {"name": "tool_pos", "start": 0, "count": 3, "unit": "m"},
+        {"name": "tool_quat", "start": 3, "count": 4, "unit": "xyzw"}]}
+    policy, _ = make_policy("endpoint:m,tools=on", catalogue, None)
+    assert policy.name.endswith("-tools") and "call exactly one tool" in policy._system
+    policy.reset(torch.arange(1), ["work order"])
+    obs = {"clock": torch.tensor([[0, wire.FIRST | wire.AWAKE]], dtype=torch.int32),
+           "proprio": torch.tensor([[0.4, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0]]),
+           "completions": torch.zeros(1, 2, 8, dtype=torch.int32)}
+    call = {"id": "c1", "type": "function", "function": {"name": "push", "arguments": '{"mm": 5}'}}
+    replies += [{"content": "", "reasoning_content": "press it on", "tool_calls": [call]},
+                {"content": "I am done talking."},  # no call: asked again with another seed...
+                {"content": "Still talking."}]  # ...and then counted as unreadable
+    records = policy.act(obs).numpy().view(wire.COMMAND)[..., 0]
+    assert np.allclose(records["args"][0, 0, :3], [0.4, 0.0, 0.505]) and seen[0]["tools"][0]["function"]["name"]
+    assert "## The robot now" in seen[0]["messages"][1]["content"]
+    obs["clock"] = torch.tensor([[16, wire.AWAKE]], dtype=torch.int32)
+    assert policy.act(obs) is not None and policy._unread == {0}
+    sent = seen[1]["messages"]
+    assert sent[2] == {"role": "assistant", "content": "", "reasoning_content": "press it on", "tool_calls": [call]}
+    assert sent[3]["role"] == "tool" and sent[3]["tool_call_id"] == "c1"
+    assert (seen[1]["seed"], seen[2]["seed"]) == (0, 1)
+    assert parse_call({"function": {"name": "turn", "arguments": "not json"}}, (np.zeros(3), np.eye(4)[3])) is None

@@ -4,7 +4,7 @@ Where the model runs is a URL. A local server for open weights and a remote serv
 Settings come with the policy name, or else from the environment variable named beside each:
     --policy endpoint:<model>[,wrench=on][,reasoning=on][,temperature=0][,max_tokens=4096][,seed=0][,rounds=40]
                              [,log=<file.jsonl>][,url=<base url>][,commands=pose][,privileged=off][,notes=<file>]
-                             [,keep_thinking=off]
+                             [,keep_thinking=off][,tools=off]
     SOLARBENCH_ENDPOINT_URL        the server's base address, ending in /v1 (or url=)
     SOLARBENCH_ENDPOINT_LOG        a JSON-lines file that gets one line per call (or log=)
     SOLARBENCH_ENDPOINT_KEY        sent as a bearer token if set; never stored, logged or written to a result
@@ -21,6 +21,10 @@ earlier attempts); the result records the file's name.
 ``keep_thinking=on`` sends the model's earlier thinking back with its earlier replies and asks the chat template to
 keep it (``truncate_history_thinking`` off), so it need not work everything out again each round. The conversation
 then grows by each round's thinking: cap it with the server's thinking budget and ``rounds``.
+``tools=on`` drives the model through native tool calls instead of a line of JSON: aim, push, turn, push_and_turn,
+pose and done (the commands of ``commands=assist``, which it implies). Each call's result is the next state report,
+sent as the tool's result, so the conversation stays one tool loop and a chat template that drops thinking before
+the latest user message keeps all of it. A reply without a usable call is asked for once more with another seed.
 
 What the model reads: the description of its body and how to reply (the system message), the work order, then one
 message per round with the selected channels as text. Its own earlier replies stay in the conversation, so each
@@ -94,6 +98,46 @@ off the bolt's axis, and the angle between them.
 out from the head top, and one that puts it 50 mm out on the axis. All point the socket into the bolt and allow for \
 where your last pose actually left the socket (the arm settles a little off its target, consistently the same way).
 """
+TOOLS_REPLY = """
+## Commands
+You act through the tools you are given: call exactly one tool each turn. The arm moves the tool within its limits \
+and stops when it arrives, when it can go no further, or when the command's time runs out; the tool's result then \
+tells you how the command ended and what the robot senses. Keep calling tools until the job is finished or cannot \
+be finished, then call done.
+"""
+
+
+def _tool(name: str, description: str, **properties) -> dict:
+    return {"type": "function", "function": {"name": name, "description": description, "parameters": {
+        "type": "object", "properties": properties, "required": list(properties)}}}
+
+
+def _vector(n: int, what: str) -> dict:
+    return {"type": "array", "items": {"type": "number"}, "minItems": n, "maxItems": n, "description": what}
+
+
+TOOLS = [
+    _tool("aim", "Put the centre of the socket's open face at a point, with the open face pointing along a direction, "
+          "both in the base frame. The tool turns as little as it can to get there.",
+          aim=_vector(3, "the point [x, y, z] in metres"),
+          socket_toward=_vector(3, "the direction tool z points; need not be a unit vector")),
+    _tool("push", "Move the tool straight along the way the socket points, keeping its orientation. Negative moves "
+          "it back.", mm={"type": "number", "description": "distance in millimetres"}),
+    _tool("turn", "Turn the tool about its own z axis, keeping its position. Positive turns clockwise as seen from "
+          "behind the tool, which tightens a right-hand thread. At most 90 degrees; more is cut to 90.",
+          deg={"type": "number", "description": "angle in degrees"}),
+    _tool("push_and_turn", "Both at once: turn while pressing (or pulling) along the socket's axis.",
+          mm={"type": "number", "description": "distance in millimetres"},
+          deg={"type": "number", "description": "angle in degrees, at most 90"}),
+    _tool("pose", "Send the tool frame to a pose in the base frame.", position=_vector(3, "[x, y, z] in metres"),
+          quaternion=_vector(4, "[x, y, z, w]")),
+    _tool("done", "The job is finished or cannot be finished."),
+]
+_CALLS = {"aim": lambda a: {"aim": a.get("aim"), "socket_toward": a.get("socket_toward")},
+          "push": lambda a: {"push_mm": a.get("mm")}, "turn": lambda a: {"turn_deg": a.get("deg")},
+          "push_and_turn": lambda a: {"push_mm": a.get("mm"), "turn_deg": a.get("deg")},
+          "pose": lambda a: {"position": a.get("position"), "quaternion": a.get("quaternion")},
+          "done": lambda a: {"done": True}}
 AGAIN = 'That reply did not end with a command that could be read. Send only the line of JSON.'
 UNREAD = "Your last reply did not end with a command that could be read.\n"
 ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED_OUT: "ran out of time",
@@ -101,7 +145,8 @@ ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED
          wire.INVALID: "was refused: invalid argument", wire.FULL: "was refused: queue full"}
 ENCODING = "text, 4 decimals"
 OPTIONS = {"wrench": "off", "reasoning": "on", "temperature": "0", "max_tokens": "4096", "seed": "0", "rounds": "40",
-           "log": "", "url": "", "commands": "pose", "privileged": "off", "notes": "", "keep_thinking": "off"}
+           "log": "", "url": "", "commands": "pose", "privileged": "off", "notes": "", "keep_thinking": "off",
+           "tools": "off"}
 _DECODER = json.JSONDecoder()
 
 
@@ -174,7 +219,25 @@ def _tool_pose(catalogue: dict, frame: dict[str, np.ndarray], env: int) -> tuple
 def parse(reply: str, pose: tuple[np.ndarray, np.ndarray] | None = None) -> tuple[int, list[float]] | None:
     """The opcode and arguments of the command that ends a reply, or ``None`` if it does not end with one.
     Given the tool ``pose`` now, aim, push and turn commands are read too (``commands=assist``)."""
-    data = _last_object(reply)
+    return _command(_last_object(reply), pose)
+
+
+def parse_call(call: dict, pose: tuple[np.ndarray, np.ndarray]) -> tuple[int, list[float]] | None:
+    """The command a native tool call asks for (``tools=on``), or ``None`` if it names no tool or its arguments
+    cannot be read."""
+    function = call.get("function") or {}
+    arguments = function.get("arguments") or {}
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments or "{}")
+        except ValueError:
+            return None
+    if function.get("name") not in _CALLS or not isinstance(arguments, dict):
+        return None
+    return _command(_CALLS[function["name"]](arguments), pose)
+
+
+def _command(data, pose: tuple[np.ndarray, np.ndarray] | None) -> tuple[int, list[float]] | None:
     if not isinstance(data, dict):
         return None
     if data.get("done") is True:
@@ -270,7 +333,8 @@ class EndpointPolicy:
         wrench, reasoning = options["wrench"] == "on", options["reasoning"] == "on"
         if options["commands"] not in ("pose", "assist"):
             raise ValueError(f"commands=pose or commands=assist, got {options['commands']!r}")
-        self._assist = options["commands"] == "assist"
+        self._tools = options["tools"] == "on"
+        self._assist = options["commands"] == "assist" or self._tools
         privileged = options["privileged"] == "on"
         offered = {channel["name"] for channel in catalogue["channels"]}
         wanted = ["proprio", *(["wrench"] if wrench else []), *(["completions"] if "completions" in offered else []),
@@ -278,7 +342,7 @@ class EndpointPolicy:
         self.selection = {**select(catalogue, *wanted), "depth": 1, "wake": "idle"}
         self.name = ("endpoint-" + re.sub(r"[^A-Za-z0-9.]+", "-", model) + ("-force" if wrench else "-noforce")
                      + ("" if reasoning else "-noreasoning") + ("-assist" if self._assist else "")
-                     + ("-privileged" if privileged else ""))
+                     + ("-privileged" if privileged else "") + ("-tools" if self._tools else ""))
         local = urlparse(self._url).hostname in ("localhost", "127.0.0.1", "::1")
         # what a result has to say about the model (docs/interface.md, section 10): not the address, not the key
         self.settings = {"model": model, "endpoint": "local" if local else "remote", "encoding": ENCODING,
@@ -286,14 +350,16 @@ class EndpointPolicy:
                          "max_tokens": int(options["max_tokens"]), "seed": int(options["seed"]),
                          "rounds": int(options["rounds"]), "commands": options["commands"], "privileged": privileged,
                          "notes": os.path.basename(options["notes"]),
-                         "keep_thinking": options["keep_thinking"] == "on"}
+                         "keep_thinking": options["keep_thinking"] == "on", "tools": self._tools}
         self._catalogue, self._layout = catalogue, wire.Layout(catalogue, self.selection)
         notes = "\n" + Path(options["notes"]).read_text() if options["notes"] else ""
-        self._system = (prompts.body(catalogue["task"], wrench) + (REPLY_ASSIST if self._assist else REPLY)
+        reply = TOOLS_REPLY if self._tools else REPLY_ASSIST if self._assist else REPLY
+        self._system = (prompts.body(catalogue["task"], wrench) + reply
                         + (PRIVILEGED if privileged else "") + notes)
         self._messages: dict[int, list[dict]] = {}
         self._sent: dict[int, int | None] = {}  # id of the last command each environment sent
         self._target: dict[int, np.ndarray | None] = {}  # position the last pose command asked for
+        self._call: dict[int, str | None] = {}  # id of the tool call the next state report answers (tools=on)
         self._episode: dict[int, int] = {}  # how many episodes each environment has started
         self._unread: set[int] = set()
         self.calls: dict[int, list[dict]] = {}  # per environment, one entry per call in the episode under way
@@ -308,14 +374,14 @@ class EndpointPolicy:
             if self.calls.get(env):
                 self.finished.append(self.calls[env])
             self._messages[env] = [{"role": "system", "content": self._system}, {"role": "user", "content": work_order}]
-            self._sent[env], self._target[env], self.calls[env] = None, None, []
+            self._sent[env], self._target[env], self._call[env], self.calls[env] = None, None, None, []
             self._episode[env] = self._episode.get(env, -1) + 1
             self._unread.discard(env)
 
-    def _post(self, messages: list[dict]) -> dict:
+    def _post(self, messages: list[dict], retry: bool = False) -> dict:
         s = self.settings
         body = {"model": s["model"], "messages": messages, "temperature": s["temperature"],
-                "max_tokens": s["max_tokens"], "seed": s["seed"],
+                "max_tokens": s["max_tokens"], "seed": s["seed"] + retry, **({"tools": TOOLS} if self._tools else {}),
                 "chat_template_kwargs": {"enable_thinking": s["reasoning"],
                                          **({"truncate_history_thinking": False} if s["keep_thinking"] else {})}}
         headers = {"Content-Type": "application/json"}
@@ -335,6 +401,8 @@ class EndpointPolicy:
         raise AssertionError("unreachable")
 
     def _ask(self, env: int, text: str, tick: int, pose=None) -> tuple[int, list[float]] | None:
+        if self._tools:
+            return self._ask_tools(env, text, tick, pose)
         messages = self._messages[env]
         messages.append({"role": "user", "content": text})
         command = None
@@ -358,6 +426,41 @@ class EndpointPolicy:
             if not retry:
                 messages.append({"role": "user", "content": AGAIN})
         return command
+
+    def _ask_tools(self, env: int, text: str, tick: int, pose) -> tuple[int, list[float]] | None:
+        """One turn of the tool loop: the state report goes back as the result of the last call (or, before the
+        first call, after the work order), and the model's first tool call becomes the command."""
+        messages = self._messages[env]
+        if self._call[env]:
+            messages.append({"role": "tool", "tool_call_id": self._call[env], "content": text})
+        elif len(messages) == 2:  # first turn: the state follows the work order in the same message
+            messages[1] = {"role": "user", "content": messages[1]["content"] + "\n\n## The robot now\n" + text}
+        else:
+            messages.append({"role": "user", "content": text})
+        for retry in (False, True):
+            started = time.perf_counter()
+            answer = self._post(messages, retry)
+            choice = answer["choices"][0]
+            message = choice["message"]
+            reply, thought = message.get("content") or "", message.get("reasoning_content") or ""
+            tool_calls = message.get("tool_calls") or []
+            command, usage = parse_call(tool_calls[0], pose) if tool_calls else None, answer.get("usage", {})
+            call = {"wall_s": time.perf_counter() - started, "tokens_read": usage.get("prompt_tokens"),
+                    "tokens_written": usage.get("completion_tokens"),
+                    "tokens_cached": (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
+                    "finish": choice.get("finish_reason"), "parsed": command is not None, "retry": retry}
+            self.calls[env].append(call)
+            shown = (reply + "\n" + json.dumps(tool_calls[0]["function"])).strip() if tool_calls else reply
+            self._write_log(env, tick, call, shown, thought, command)
+            if command is not None:
+                first = {**tool_calls[0], "id": tool_calls[0].get("id") or f"call-{len(messages)}"}
+                messages.append({"role": "assistant", "content": reply, "tool_calls": [first],
+                                 **({"reasoning_content": thought} if thought else {})})
+                self._call[env] = first["id"]
+                return command
+        messages.append({"role": "assistant", "content": reply, **({"reasoning_content": thought} if thought else {})})
+        self._call[env] = None
+        return None
 
     def _write_log(self, env, tick, call, reply, thought, command) -> None:
         if not self._log:
