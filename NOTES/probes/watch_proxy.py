@@ -31,14 +31,13 @@ screen, names, seen = threading.Lock(), threading.Lock(), {}
 
 def header(request: dict) -> str:
     messages = request.get("messages", [])
-    users = [m for m in messages if m["role"] == "user"]
+    rounds = sum(m["role"] == "assistant" for m in messages) + 1
     key = messages[1]["content"][:200] if len(messages) > 1 else ""  # the work order names the conversation
     with names:
         conversation = seen.setdefault(key, len(seen))
-    text = f"\n{BOLD}{CYAN}── conversation {conversation}, round {len(users) - 1}  ({time.strftime('%H:%M:%S')}){END}\n"
-    if len(users) == 2:  # first round: show the work order once
-        text += f"{DIM}work order:\n{users[0]['content']}{END}\n"
-    return text + f"{DIM}sent:\n{users[-1]['content'] if users else ''}{END}\n"
+    text = f"\n{BOLD}{CYAN}── conversation {conversation}, round {rounds}  ({time.strftime('%H:%M:%S')}){END}\n"
+    newest = messages[-1] if messages else {"role": "", "content": ""}
+    return text + f"{DIM}sent ({newest['role']}):\n{newest.get('content') or ''}{END}\n"
 
 
 class Out:
@@ -72,6 +71,7 @@ def stream(request: dict, headers: dict) -> tuple[int, dict]:
     out, started = Out(), time.perf_counter()
     out.write(header(request))
     content, thought, finish, usage, timings, model = [], [], None, {}, {}, request.get("model")
+    calls: dict[int, dict] = {}  # tool calls, assembled from their streamed pieces by index
     try:
         with urllib.request.urlopen(upstream, timeout=1800) as response:
             for raw in response:
@@ -89,6 +89,12 @@ def stream(request: dict, headers: dict) -> tuple[int, dict]:
                     if delta.get("content"):
                         content.append(delta["content"])
                         out.write(delta["content"], "reply")
+                    for piece in delta.get("tool_calls") or []:
+                        call = calls.setdefault(piece.get("index", 0), {"type": "function",
+                                                                        "function": {"name": "", "arguments": ""}})
+                        call["id"] = piece.get("id") or call.get("id")
+                        for key in ("name", "arguments"):
+                            call["function"][key] += (piece.get("function") or {}).get(key) or ""
                     finish = choice.get("finish_reason") or finish
     except urllib.error.HTTPError as error:
         out.write(f"{RED}server answered {error.code}{END}\n")
@@ -103,6 +109,10 @@ def stream(request: dict, headers: dict) -> tuple[int, dict]:
     message = {"role": "assistant", "content": "".join(content)}
     if thought:
         message["reasoning_content"] = "".join(thought)
+    if calls:
+        message["tool_calls"] = [calls[i] for i in sorted(calls)]
+        out.write(f"{BOLD}tool call:{END} " + "; ".join(f"{c['function']['name']}({c['function']['arguments']})"
+                                                       for c in message["tool_calls"]) + "\n")
     answer = {"object": "chat.completion", "model": model, "usage": usage,
               "choices": [{"index": 0, "message": message, "finish_reason": finish}]}
     if args.log:
