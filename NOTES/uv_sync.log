@@ -1,9 +1,9 @@
 Using CPython 3.12.3 interpreter at: /usr/bin/python3.12
 Creating virtual environment at: .venv
 Resolved 205 packages in 0.91ms
-   Building solarbench @ file:///home/psyber/Projects/solarbench-llm
+   Building solarbench @ file://~/Projects/solarbench-llm
 warning: `build_system.requires = ["uv-build>=0.9,<0.13"]` does not contain the current uv version 0.13.10
-      Built solarbench @ file:///home/psyber/Projects/solarbench-llm
+      Built solarbench @ file://~/Projects/solarbench-llm
 Prepared 1 package in 4ms
 Installed 200 packages in 251ms
  + absl-py==2.5.1
@@ -181,7 +181,7 @@ Installed 200 packages in 251ms
  + six==1.17.0
  + skrl==2.1.1
  + smmap==5.0.3
- + solarbench==0.1.0 (from file:///home/psyber/Projects/solarbench-llm)
+ + solarbench==0.1.0 (from file://~/Projects/solarbench-llm)
  + stack-data==0.6.3
  + starlette==1.10.0
  + sympy==1.14.0
