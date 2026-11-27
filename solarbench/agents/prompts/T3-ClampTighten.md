@@ -10,3 +10,5 @@ The job is judged on the conditions below, in this order, and on nothing else.
 - [in_spec] The installed torque has reached {torque_min:g} N·m.
 - [released] The socket is off the head, its face more than {released_mm:g} mm from the top of the head.
 - [over_torque] If the installed torque goes above {torque_max:g} N·m at any moment, the clamp is damaged and the job has failed, whatever happens afterwards.
+
+You have {time_limit_s:g} s. A job that is not finished by then has failed.
