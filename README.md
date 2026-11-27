@@ -43,6 +43,13 @@ Also here: seven OpenUSD assets generated from datasheet values and passing SimR
 Not here yet: a rankable result for any model other than the oracle (there is one short reinforcement-learning run, which fails the task, and this fork's exploratory language-model runs below), camera observations, force feedback to a learned policy, and anything on real hardware. The [board](board/README.md) shows what is in progress.
 
 ## Language models on this fork (exploratory)
+| Bolt: Nemotron 3.5 Super, unprivileged skills | Connector: Nemotron 3.5 Super orders the oracle's phases |
+|---|---|
+| ![The UR16e arm seats a socket on the clamp bolt and tightens it to 15.7 N·m in a path-traced solar site; beside it, the model's terminal shows its thinking and tool calls](docs/media/bolt_llm.gif) | ![The G1 humanoid unplugs and re-mates the MC4 connector under the table in a path-traced solar site; beside it, the model's terminal shows its thinking and tool calls](docs/media/connector_llm.gif) |
+| [Full video](NOTES/video/solarbench_t3_llm.mp4) | [Full video](NOTES/video/solarbench_t2_llm.mp4) |
+
+Each clip is one live take of dev episode 0, and both are safe successes; on the bolt that is a good episode, not a typical one (26/32 below). The GIFs play at 3× and 2×. In the full videos, the simulation stands still while the model thinks, and the frame says so with the call's real time; faster stretches are labelled; the terminal text is the model's own output. They were recorded with [`NOTES/video/record_llm.py`](NOTES/video/record_llm.py) and composed with [`NOTES/video/compose.py`](NOTES/video/compose.py).
+
 This fork ([`psyberLC/solarbench`](https://github.com/psyberLC/solarbench), branch `live-viewer`) puts NVIDIA Nemotron models in charge of both tasks. The runs are exploratory, and none of them tests the hypotheses in `paper/`. They use the dev split with one seed, the models are not pre-registered, and on the connector the brain only orders steps. Nothing here is in `results/`.
 
 **What was built.**
