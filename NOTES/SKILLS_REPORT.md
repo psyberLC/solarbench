@@ -22,7 +22,7 @@ No run damaged anything. Every bolt episode was valid. On the connector, the scr
 - **Episode 8 was lost after the bolt was in spec.** Super reached 15.9 N·m (in spec at 15.6 s) and unloaded. `retract` then twice ended "the socket is still on the head", a failure the script never met. Super then aimed with the socket rotated while it was still on the head, which turned the bolt back. It ended at 1.0 N·m installed, never released. This is the one case where a model's recovery undid finished work. No damage is scored for loosening.
 - **The oracle lost 2 episodes, 13 and 18.** Both are hard bolts for the skills too. In each it installed 16.09 N·m, inside the window, and ran the full 30 s without the evaluator ever counting the `engaged` stage. That stage needs the tool within depth, lateral and angle limits of the head, and the oracle never moved on to release. This was not investigated. It looks like the oracle turning the bolt from just outside the geometric engagement limits, and it may matter upstream; it is an observation from one run, not a confirmed defect.
 
-**Connector.**
+**Connector** (before the fix in the next section).
 - **Super ordered the four steps minimally in 28 of 32 episodes.** That is grasp, unplug, plug_in, release. It used 135 calls, median 124 tokens per call, and 3.3 min of model time; every call was a usable tool call. One 429 from the server was waited through.
 - **Every failure of the script and of Super is the same `plug_in` flaw.** The skill ends "finished" with the latch not engaged. That happened to the script on episodes 11 and 21, and to Super on 5, 10 and 25: different episodes, so it is not tied to a connector. On Super's three the plug was 17–29 mm off the sleeve's axis; the script's log does not record the offset.
   - **What the script did.** It released anyway and failed.
@@ -31,6 +31,36 @@ No run damaged anything. Every bolt episode was valid. On the connector, the scr
 - **This tests sequencing, not control,** because the skills run the oracle's own controller. Super's 28/31 and the script's 29/31 are not distinguishable at this sample size.
 
 **What changed during these runs.** The first Super connector run stopped after 16 episodes: the HPC server answered `429 Too Many Requests` and the phases adapter had no retry. Commit `e41a5ba` gives both adapters one request function that waits on 429 (the server's `Retry-After`, else 30 s, at most ten times). The run was then repeated from episode 0. The stopped run's partial logs are not kept. Nothing else changed between runs.
+
+## The three problems these runs showed, and what was done
+Investigated the same day with probes that run the evaluator in-process and log the simulator's state tick by tick (`NOTES/probes/phases_probe.py`, `NOTES/probes/bolt_engage_probe.py`). The probes' own outputs were scratch files and are not kept; the numbers below are read from them.
+
+### 1. Connector: a held tick between skills jammed some insertions (fixed, rerun)
+- **What happened.** The phase skills held the robot still for one tick at each skill boundary while the model was asked. With a fixed plan on 64 dev episodes and 16 environments, that version got 63/64. Every insertion that failed began 0.75–0.8 mm off the sleeve's axis and caught the mouth's rim. The oracle's realignment moves on the first tick the offset is under 0.8 mm, and the offset swings between about 0.1 and 0.9 mm.
+- **The hold, not the offset, is the cause.** The same plan with no hold, which is exactly the oracle, got 64/64, and its insertions from 0.78–0.8 mm off all latched.
+- **The fix** (commit `1188a14`). The model is asked on the tick a skill ends; the simulation waits for it. If it picks the step the oracle was already starting, that tick runs the oracle's action, so the natural order moves exactly as the oracle does. Any other choice holds the robot for that tick, so the model gets no motion it did not choose. `plug_in` now says "ended without the latch engaging" instead of "finished". With the fix, the fixed plan got 64/64.
+- **Rerun**, 32 dev episodes, one environment, the same setup as above. Tables: [report-runs-32-t2fix/tables.md](report-runs-32-t2fix/tables.md).
+
+| Connector (T2), safe success | before the fix | after the fix | median release, s (after) |
+|---|---|---|---|
+| oracle (privileged) | 32/32 (100%, 89–100) | 32/32 (100%, 89–100) | 5.1 |
+| phase skills, fixed sequence | 29/31 valid (94%, 79–98) | 31/31 valid (100%, 89–100) | 5.1 |
+| phase skills, Nemotron 3.5 Super | 28/31 valid (90%, 75–97) | **32/32 (100%, 89–100)** | 5.1 |
+
+Super used the minimal 4 calls in every episode: 128 calls, median 106 tokens, 2.1 min of model time. Each script run lost one episode to a numerical failure, which the evaluator excludes. The phase skills no longer cost time against the oracle.
+
+### 2. Bolt: `seat` failed on a wedged socket and did not say so (fixed, checked with the script, Super not rerun)
+- **What happens.** On some bolts the socket comes down onto the hex only 1.9–2.2 mm (2.5 mm counts as seated; when properly seated it sits at about 5 mm). There it wedges on the chamfered corners and turns the bolt from that position. In the oracle runs it turned the bolt for about 7 of its 10 seating seconds, at a steady 0.7–1.0 N·m: the bolt's running torque, under the 2 N·m "corner caught" guard.
+- **Pressing harder does not seat it.** The oracle's 7 mm press while tightening left it at 2.2 mm. In the skill runs, `tighten_to`, with its firmer press and its following of the sensed sideways force, finished seating every such socket.
+- **The fix** (commits `85b526d`, `69eee67`). Every successful seat in the script runs took 3.9 s or less, that is 56 degrees of searching, less than the hex's 60-degree period. So `seat` now gives up once it has searched 75 degrees with the socket on the head. It says how far on the socket is, says it is likely wedged when that is 1.5 mm or more, and says that `tighten_to` can finish seating it. Its description says the same.
+- **Check.** The fixed script, rerun on the same 32 episodes at `85b526d` (before the wording change): **32/32 safe** (100%, 89–100), installed 14.63–15.65 N·m. The new message fired on 5 bolts (9, 16, 17, 18, 29). Bolts that had seated late before released sooner: episodes 9, 13, 16, 17 and 18 by 2.6–4.5 s, episode 29 by 1.0 s. The median release fell from 18.0 to 17.5 s. Result: [report-runs-seatcheck/](report-runs-seatcheck/).
+- **Not verified:** Super was not rerun on the bolt, so whether it now follows the message is unknown.
+
+### 3. Bolt oracle: its two losses are the same wedge (reported, not changed)
+- **What happened.** Episodes 13 and 18, the oracle's two losses, are wedged sockets. The oracle turned each bolt to 16.09 N·m from 1.9–2.2 mm on and waited for an engagement that never came. The evaluator is right not to count a socket 2 mm onto the head as engaged, so the check stays as it is.
+- **Only when episodes run back to back.** The failure reproduced in all three one-environment runs (17/19 twice, 30/32). With 16 environments the oracle got 32/32, including 13 and 18, with the socket about 5 mm on, 0.1 mm off the axis and 2° of tilt whenever the bolt turned.
+- **Unexplained.** Why running episodes one after another on one environment changes the outcome is not known. A probe showed the arm's target starts each episode on the tool, so it is not a stale target.
+- **For the maintainer, not fixed here.** The oracle and the evaluator are upstream code. Two upstream questions: whether the oracle should detect a socket that turns the bolt without seating, and why one-environment runs differ.
 
 ---
 

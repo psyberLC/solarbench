@@ -56,12 +56,15 @@ This fork ([`psyberLC/solarbench`](https://github.com/psyberLC/solarbench), bran
 | Task | Oracle (privileged) | Skills, fixed sequence | Skills, Nemotron 3.5 Super |
 |---|---|---|---|
 | Bolt, R2 pose interface (`…T3-ClampTighten-UR16e-R2-v0`) | 30/32 (80–98%) | 32/32 (89–100%), unprivileged | 26/32 (65–91%), unprivileged |
-| Connector (`SolarBench-T2-MC4-G1-v0`) | 32/32 (89–100%) | 29/31 (79–98%), privileged | 28/31 (75–97%), privileged |
+| Connector (`SolarBench-T2-MC4-G1-v0`), after the boundary fix | 32/32 (89–100%) | 31/31 (89–100%), privileged | 32/32 (89–100%), privileged |
 
-No episode was damaged. Without skills, when the model sent poses itself, Nemotron 3 Nano and 3.5 Lightning never succeeded safely on the bolt.
+No episode was damaged.
+- **Connector fix.** Before it, a one-tick hold between skills jammed a few insertions: the script got 29/31 and Super 28/31.
+- **Bolt.** Super's bolt losses mostly came from a socket wedged about 2 mm onto the head, which `seat` reported only as "not seated". The oracle's two losses are the same wedge. `seat` now says so and points to `tighten_to`, which seats the socket; the fixed script still got 32/32 with it. Super has not been rerun on the bolt since.
+- **Without skills.** When the model sent poses itself, Nemotron 3 Nano and 3.5 Lightning never succeeded safely on the bolt.
 
 **Read more.**
-- [NOTES/SKILLS_REPORT.md](NOTES/SKILLS_REPORT.md): the comparison and why the model lost the episodes it lost. Its tables are generated from the result files in [NOTES/report-runs-32/](NOTES/report-runs-32/tables.md).
+- [NOTES/SKILLS_REPORT.md](NOTES/SKILLS_REPORT.md): the comparison, why the model lost the episodes it lost, and the fixes. Its tables are generated from the result files in [NOTES/report-runs-32/](NOTES/report-runs-32/tables.md) and [NOTES/report-runs-32-t2fix/](NOTES/report-runs-32-t2fix/tables.md).
 - [NOTES/REPORT.md](NOTES/REPORT.md): the first laptop experiment, where the model sent raw poses.
 - [NOTES/LIVE_LESSONS.md](NOTES/LIVE_LESSONS.md): what watching the models in the viewer taught.
 - [NOTES/HPC_PLAN.md](NOTES/HPC_PLAN.md): serving Super on the cluster.
