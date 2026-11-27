@@ -84,8 +84,11 @@ Each round also gives what a scripted controller with full knowledge of the simu
 - installed_torque: the tightening torque the bolt has reached (what the job is judged on).
 - drive_torque: the torque wrist 3 applies, tightening positive. It is not limited by the force-torque sensor's range.
 - engaged: 1 while the socket counts as seated on the head, 0 otherwise.
-- socket depth on the head (how far the top of the head is inside the socket, negative when the face is short of \
-it), how far the socket's axis is off the bolt's axis and in which direction, and the angle between them.
+- where the top of the head is, how deep the socket is on it (said in words), how far and which way the socket is \
+off the bolt's axis, and the angle between them.
+- two ready commands: one that centres the socket on the bolt's axis where it is now, and one that centres it 0.5 mm \
+out from the head top. Both point the socket into the bolt and allow for where your last pose actually left the \
+socket (the arm settles a little off its target, consistently the same way).
 """
 AGAIN = 'That reply did not end with a command that could be read. Send only the line of JSON.'
 UNREAD = "Your last reply did not end with a command that could be read.\n"
@@ -187,7 +190,7 @@ def parse(reply: str, pose: tuple[np.ndarray, np.ndarray] | None = None) -> tupl
 
 
 def describe(catalogue: dict, layout: wire.Layout, frame: dict[str, np.ndarray], env: int, sent: int | None,
-             pose: tuple[np.ndarray, np.ndarray] | None = None) -> str:
+             pose: tuple[np.ndarray, np.ndarray] | None = None, target: np.ndarray | None = None) -> str:
     """One environment's frame as text: the tick, how the last command ended, then each field of each channel, and,
     given the tool ``pose``, the direction the socket points."""
     lines = [f"tick {int(frame['clock'][env]['tick'])}"]
@@ -207,7 +210,7 @@ def describe(catalogue: dict, layout: wire.Layout, frame: dict[str, np.ndarray],
     if pose is not None:
         lines.append("socket points along (tool z, base frame): " + ", ".join(f"{v:.4f}" for v in _axis(pose[1], 2)))
     if "head_top_minus_tool" in by_field(catalogue, "policy"):
-        lines += _seating(catalogue, frame, env)
+        lines += _seating(catalogue, frame, env, target)
     return "\n".join(lines)
 
 
@@ -215,20 +218,37 @@ def by_field(catalogue: dict, channel: str) -> dict:
     return {f["name"]: f for c in catalogue["channels"] if c["name"] == channel for f in c.get("fields", ())}
 
 
-def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int) -> list[str]:
-    """How deep, how far off the axis and how tilted the socket is on the head, from the privileged channel."""
+def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int, target: np.ndarray | None) -> list[str]:
+    """Where the socket is on the head, from the privileged channel, and two ready centring commands. ``target`` is
+    the position the last pose command asked for: the gap between it and where the socket settled is carried into
+    the suggested aims, as an integrator would."""
     fields, row = by_field(catalogue, "policy"), frame["policy"][env]
     rel, axis = (np.array(row[fields[k]["start"] : fields[k]["start"] + 3], float) for k in ("head_top_minus_tool",
                                                                                               "bolt_axis"))
-    depth = float(rel @ axis)
+    tool, quat = _tool_pose(catalogue, frame, env)
+    head, depth = tool + rel, float(rel @ axis)
     side = -(rel - depth * axis)  # from the bolt's axis to the socket's centre, across the axis
     lateral = float(np.linalg.norm(side))
-    tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(-_axis(_tool_pose(catalogue, frame, env)[1], 2) @ axis)))))
-    across = ", ".join(f"{round(1e3 * v, 2) + 0.0:+.2f}" for v in side)  # + 0.0: no "-0.00"
-    return [f"socket depth on the head: {1e3 * depth:.2f} mm",
-            f"socket axis off the bolt axis: {1e3 * lateral:.2f} mm, the socket being at {across} mm (base frame) "
-            "from the axis",
-            f"socket axis tilted from the bolt axis: {tilt:.2f} deg"]
+    tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(-_axis(quat, 2) @ axis)))))
+    near = target is not None and np.linalg.norm(target - tool) < 0.01  # the last pose's error applies here
+    asked = (target - head) - ((target - head) @ axis) * axis if near else side  # across the axis
+    shift = asked - side
+
+    def fmt(v, scale=1.0, digits=4) -> str:
+        return ", ".join(f"{round(scale * x, digits) + 0.0:.{digits}f}" for x in v)  # + 0.0: no "-0.0000"
+
+    def aim(out: float) -> str:
+        return f'{{"aim": [{fmt(head + out * axis + shift, digits=5)}], "socket_toward": [{fmt(-axis)}]}}'
+
+    where = (f"the socket's face is {-1e3 * depth:.2f} mm short of the head top; the head is not in the socket"
+             if depth < 0 else f"the top of the head is {1e3 * depth:.2f} mm inside the socket")
+    return [f"head top centre [m]: {fmt(head)}",
+            f"socket depth on the head: {1e3 * depth:.2f} mm ({where})",
+            f"socket axis off the bolt axis: {1e3 * lateral:.2f} mm (the socket's centre is at "
+            f"{fmt(side, 1e3, 2)} mm from the axis, base frame)",
+            f"socket axis tilted from the bolt axis: {tilt:.2f} deg",
+            f"to centre the socket on the axis where it is now: {aim(-depth)}",
+            f"to centre it 0.5 mm out from the head top: {aim(0.0005)}"]
 
 
 class EndpointPolicy:
@@ -267,6 +287,7 @@ class EndpointPolicy:
                         + (PRIVILEGED if privileged else "") + notes)
         self._messages: dict[int, list[dict]] = {}
         self._sent: dict[int, int | None] = {}  # id of the last command each environment sent
+        self._target: dict[int, np.ndarray | None] = {}  # position the last pose command asked for
         self._episode: dict[int, int] = {}  # how many episodes each environment has started
         self._unread: set[int] = set()
         self.calls: dict[int, list[dict]] = {}  # per environment, one entry per call in the episode under way
@@ -281,7 +302,7 @@ class EndpointPolicy:
             if self.calls.get(env):
                 self.finished.append(self.calls[env])
             self._messages[env] = [{"role": "system", "content": self._system}, {"role": "user", "content": work_order}]
-            self._sent[env], self.calls[env] = None, []
+            self._sent[env], self._target[env], self.calls[env] = None, None, []
             self._episode[env] = self._episode.get(env, -1) + 1
             self._unread.discard(env)
 
@@ -353,7 +374,7 @@ class EndpointPolicy:
             return None
         texts, poses = [], [_tool_pose(self._catalogue, frame, env) if self._assist else None for env in awake]
         for env, pose in zip(awake, poses, strict=True):
-            text = describe(self._catalogue, self._layout, frame, env, self._sent[env], pose)
+            text = describe(self._catalogue, self._layout, frame, env, self._sent[env], pose, self._target.get(env))
             texts.append(UNREAD + text if env in self._unread else text)
         ticks = [int(clock[env]["tick"]) for env in awake]
         self._pool = self._pool or ThreadPoolExecutor(max_workers=len(clock))
@@ -366,6 +387,7 @@ class EndpointPolicy:
             record = records[env, 0]
             record["opcode"], record["id"], record["based_on"] = command[0], self._sent[env], clock[env]["tick"]
             record["args"][: len(command[1])] = command[1]
+            self._target[env] = np.array(command[1][:3]) if command[0] == wire.TOOL_POSE else None
         return torch.from_numpy(records.view("<i4").reshape(len(clock), 1, 16)).to(obs["clock"].device)
 
 

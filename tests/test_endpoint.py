@@ -267,9 +267,14 @@ def test_privileged_readings_are_read_by_name_and_give_depth_offset_and_tilt():
              "completions": np.zeros((1, 2), wire.COMPLETION), "policy": policy}
     text = describe(catalogue, layout, frame, 0, None)
     assert "installed_torque [N*m]: 8.0000" in text and "drive_torque [N*m]: 5.0000" in text
-    assert "socket depth on the head: 4.00 mm" in text
-    assert "socket axis off the bolt axis: 1.00 mm, the socket being at -1.00, +0.00, +0.00 mm" in text
+    assert "socket depth on the head: 4.00 mm (the top of the head is 4.00 mm inside the socket)" in text
+    assert "socket axis off the bolt axis: 1.00 mm (the socket's centre is at -1.00, 0.00, 0.00 mm" in text
     assert "socket axis tilted from the bolt axis: 0.00 deg" in text  # tool z (0, 0, -1) against the axis (0, 0, 1)
+    here = '{"aim": [0.00100, 0.00000, 0.00000], "socket_toward": [0.0000, 0.0000, -1.0000]}'
+    assert f"to centre the socket on the axis where it is now: {here}" in text  # no earlier pose: the axis itself
+    # the last pose asked for 0.5 mm to one side of the axis and the socket settled 1 mm to the other: aim 1.5 mm over
+    text = describe(catalogue, layout, frame, 0, None, target=np.array([0.0015, 0.0, 0.0]))
+    assert '"aim": [0.00250, 0.00000, 0.00450]' in text  # 0.5 mm out from the head top (z 4 mm), shifted by the error
 
 
 @pytest.mark.unit
