@@ -4,8 +4,8 @@ Runs scripts/evaluate.py with the oracle wrapped in a policy "oracleprobe" that,
 environment the bolt angle and the socket's depth over the head, lateral offset from the bolt's axis and tilt,
 as the environment computes them for its engaged stage (depth > engage_depth, lateral < engage_lateral, tilt <
 engage_angle_deg). One line per episode goes to LOG: the ticks on which the bolt turned, and those quantities on them.
-  LOG=/tmp/engage.jsonl .venv/bin/python NOTES/probes/bolt_engage_probe.py --task SolarBench-T3-ClampTighten-UR16e-R2-v0 \
-      --episodes 32 --num_envs 16 --viz none --split dev --out_dir /tmp/engage
+  LOG=/tmp/engage.jsonl .venv/bin/python NOTES/probes/bolt_engage_probe.py \
+      --task SolarBench-T3-ClampTighten-UR16e-R2-v0 --episodes 32 --num_envs 16 --viz none --split dev --out_dir /tmp/e
 """
 
 import json
