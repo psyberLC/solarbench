@@ -148,5 +148,7 @@ class Skill:
         if -depth >= out - 0.002:
             return f"retracted: the socket face is {-1e3 * depth:.0f} mm from the head top"
         if elapsed > self.limit:
-            return f"stopped by the time limit with the face {-1e3 * depth:.0f} mm from the head top"
+            where = (f"the socket is still on the head, the head top {1e3 * depth:.1f} mm inside it" if depth > 0
+                     else f"the socket face is {-1e3 * depth:.0f} mm from the head top")
+            return f"stopped by the time limit: {where}"
         return self._target(r, head + out * axis)

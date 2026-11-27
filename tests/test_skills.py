@@ -75,6 +75,9 @@ def test_unload_and_retract_end_on_their_conditions():
     position, _ = retract.step(readings(depth=0.004))
     assert np.allclose(position, HEAD + 0.05 * AXIS, atol=1e-3)
     assert retract.step(readings(depth=-0.049)).startswith("retracted")
+    stuck = Skill("retract", {"mm": 50}, readings(depth=0.004), 30)
+    stuck.ticks = 10**6  # past its time limit
+    assert "still on the head, the head top 4.0 mm inside it" in stuck.step(readings(depth=0.004))
 
 
 @pytest.mark.unit
