@@ -161,5 +161,6 @@ The scheduler templates target Torque/PBS. Run the model server and the simulato
 
 ## 6. Decisions left to the developer and the maintainer
 - Whether any of the three branches should be proposed upstream. They were written to the board's rules (one item, one branch, `touches` respected, dated log), but the fork's `agents-endpoint` builds on the maintainer's unmerged branch, and `docs/tasks.md` still says the evaluator does not hand channels to a policy.
+- Your open upstream PR [rad-robotics/solarbench#14](https://github.com/rad-robotics/solarbench/pull/14) (`sim-bolt-newton-speed`, opened before this session) changes `solarbench/tasks/clamp_env.py`, which `sim-pose-action` also changes (it appends `ClampPoseEnv`). If both go upstream, one will need a rebase. The board's overlap check would flag the two claims as sharing a path.
 - Whether to pre-register Nemotron (it is not in `paper/hypotheses.md`, so these runs are exploratory).
 - Whether R2's arrival rule (0.5 mm and 0.005 rad, settled) and its stall rule are the right controller choices (ASSUMPTIONS M13).
