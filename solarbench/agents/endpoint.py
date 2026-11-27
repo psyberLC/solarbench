@@ -3,7 +3,7 @@
 Where the model runs is a URL. A local server for open weights and a remote service look the same from here.
 Settings come with the policy name, or else from the environment variable named beside each:
     --policy endpoint:<model>[,wrench=on][,reasoning=on][,temperature=0][,max_tokens=4096][,seed=0][,rounds=40]
-                             [,log=<file.jsonl>][,url=<base url>][,commands=pose]
+                             [,log=<file.jsonl>][,url=<base url>][,commands=pose][,privileged=off]
     SOLARBENCH_ENDPOINT_URL        the server's base address, ending in /v1 (or url=)
     SOLARBENCH_ENDPOINT_LOG        a JSON-lines file that gets one line per call (or log=)
     SOLARBENCH_ENDPOINT_KEY        sent as a bearer token if set; never stored, logged or written to a result
@@ -12,6 +12,9 @@ Settings come with the policy name, or else from the environment variable named 
 ``commands=assist`` adds commands that leave the rotation arithmetic to the adapter (aim the socket along a direction,
 push along it, turn about it), each turned into one pose from the tool pose now, and tells the model where the socket
 points. The model still decides every move; the arm still moves within its own limits.
+``privileged=on`` also gives the model the task's privileged channel, read by its field names (where the head is from
+the tool, the bolt's axis and angle, installed and drive torque, whether the socket counts as seated), and how deep,
+how far off the axis and how tilted the socket is. The result is then marked privileged.
 
 What the model reads: the description of its body and how to reply (the system message), the work order, then one
 message per round with the selected channels as text. Its own earlier replies stay in the conversation, so each
@@ -68,6 +71,18 @@ seen from behind the tool, which tightens a right-hand thread. At most 90 degree
 
 Reason as you wish, then end your reply with one command, as one line of JSON, and nothing after it.
 """
+PRIVILEGED = """
+## Privileged readings
+Each round also gives what a scripted controller with full knowledge of the simulation reads:
+- head_top_minus_tool: the vector from the centre of the socket's face to the centre of the top of the head.
+- bolt_axis: the direction the bolt's axis points out of the head.
+- bolt_angle: how far the bolt has been turned in the tightening direction; 0 when it is snug, negative before.
+- installed_torque: the tightening torque the bolt has reached (what the job is judged on).
+- drive_torque: the torque wrist 3 applies, tightening positive. It is not limited by the force-torque sensor's range.
+- engaged: 1 while the socket counts as seated on the head, 0 otherwise.
+- socket depth on the head (how far the top of the head is inside the socket, negative when the face is short of \
+it), how far the socket's axis is off the bolt's axis, and the angle between them.
+"""
 AGAIN = 'That reply did not end with a command that could be read. Send only the line of JSON.'
 UNREAD = "Your last reply did not end with a command that could be read.\n"
 ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED_OUT: "ran out of time",
@@ -75,7 +90,7 @@ ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED
          wire.INVALID: "was refused: invalid argument", wire.FULL: "was refused: queue full"}
 ENCODING = "text, 4 decimals"
 OPTIONS = {"wrench": "off", "reasoning": "on", "temperature": "0", "max_tokens": "4096", "seed": "0", "rounds": "40",
-           "log": "", "url": "", "commands": "pose"}
+           "log": "", "url": "", "commands": "pose", "privileged": "off"}
 _DECODER = json.JSONDecoder()
 
 
@@ -185,11 +200,29 @@ def describe(catalogue: dict, layout: wire.Layout, frame: dict[str, np.ndarray],
     by_name = {channel["name"]: channel for channel in catalogue["channels"]}
     for name, _, _ in layout.blocks:
         for field in by_name[name].get("fields", ()):
-            values = frame[name][env][field["start"] : field["start"] + field["count"]]
+            values = frame[name][env][field["start"] : field["start"] + field["count"]] * field.get("scale", 1.0)
             lines.append(f"{field['name']} [{field['unit']}]: " + ", ".join(f"{value:.4f}" for value in values))
     if pose is not None:
         lines.append("socket points along (tool z, base frame): " + ", ".join(f"{v:.4f}" for v in _axis(pose[1], 2)))
+    if "head_top_minus_tool" in by_field(catalogue, "policy"):
+        lines += _seating(catalogue, frame, env)
     return "\n".join(lines)
+
+
+def by_field(catalogue: dict, channel: str) -> dict:
+    return {f["name"]: f for c in catalogue["channels"] if c["name"] == channel for f in c.get("fields", ())}
+
+
+def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int) -> list[str]:
+    """How deep, how far off the axis and how tilted the socket is on the head, from the privileged channel."""
+    fields, row = by_field(catalogue, "policy"), frame["policy"][env]
+    rel, axis = (np.array(row[fields[k]["start"] : fields[k]["start"] + 3], float) for k in ("head_top_minus_tool",
+                                                                                              "bolt_axis"))
+    depth = float(rel @ axis)
+    lateral = float(np.linalg.norm(rel - depth * axis))
+    tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(-_axis(_tool_pose(catalogue, frame, env)[1], 2) @ axis)))))
+    return [f"socket depth on the head: {1e3 * depth:.2f} mm", f"socket axis off the bolt axis: {1e3 * lateral:.2f} mm",
+            f"socket axis tilted from the bolt axis: {tilt:.2f} deg"]
 
 
 class EndpointPolicy:
@@ -207,19 +240,23 @@ class EndpointPolicy:
         if options["commands"] not in ("pose", "assist"):
             raise ValueError(f"commands=pose or commands=assist, got {options['commands']!r}")
         self._assist = options["commands"] == "assist"
+        privileged = options["privileged"] == "on"
         offered = {channel["name"] for channel in catalogue["channels"]}
-        wanted = ["proprio", *(["wrench"] if wrench else []), *(["completions"] if "completions" in offered else [])]
+        wanted = ["proprio", *(["wrench"] if wrench else []), *(["completions"] if "completions" in offered else []),
+                  *(["policy"] if privileged else [])]
         self.selection = {**select(catalogue, *wanted), "depth": 1, "wake": "idle"}
         self.name = ("endpoint-" + re.sub(r"[^A-Za-z0-9.]+", "-", model) + ("-force" if wrench else "-noforce")
-                     + ("" if reasoning else "-noreasoning") + ("-assist" if self._assist else ""))
+                     + ("" if reasoning else "-noreasoning") + ("-assist" if self._assist else "")
+                     + ("-privileged" if privileged else ""))
         local = urlparse(self._url).hostname in ("localhost", "127.0.0.1", "::1")
         # what a result has to say about the model (docs/interface.md, section 10): not the address, not the key
         self.settings = {"model": model, "endpoint": "local" if local else "remote", "encoding": ENCODING,
                          "reasoning": reasoning, "temperature": float(options["temperature"]),
                          "max_tokens": int(options["max_tokens"]), "seed": int(options["seed"]),
-                         "rounds": int(options["rounds"]), "commands": options["commands"]}
+                         "rounds": int(options["rounds"]), "commands": options["commands"], "privileged": privileged}
         self._catalogue, self._layout = catalogue, wire.Layout(catalogue, self.selection)
-        self._system = prompts.body(catalogue["task"], wrench) + (REPLY_ASSIST if self._assist else REPLY)
+        self._system = prompts.body(catalogue["task"], wrench) + (REPLY_ASSIST if self._assist else REPLY) + (
+            PRIVILEGED if privileged else "")
         self._messages: dict[int, list[dict]] = {}
         self._sent: dict[int, int | None] = {}  # id of the last command each environment sent
         self._episode: dict[int, int] = {}  # how many episodes each environment has started
@@ -227,6 +264,9 @@ class EndpointPolicy:
         self.calls: dict[int, list[dict]] = {}  # per environment, one entry per call in the episode under way
         self.finished: list[list[dict]] = []  # the calls of each episode that has ended, in the order they ended
         self._pool: ThreadPoolExecutor | None = None
+
+    def attach(self, env) -> None:
+        """A privileged selection hands over the environment; this policy reads only the channel, never the env."""
 
     def reset(self, env_ids, work_orders):
         for env, work_order in zip(torch.as_tensor(env_ids).tolist(), work_orders, strict=True):

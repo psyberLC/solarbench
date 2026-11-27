@@ -79,6 +79,16 @@ def _skip_set_const_on_friction_only_changes() -> None:
     SolverMuJoCo._notify_model_changed = notify
     SolverMuJoCo._solarbench_fast_friction = True
 
+# The parts of the privileged observation (ClampEnv._get_observations) a policy reading it by name needs. Bolt angle is
+# the tightening rotation, 0 at snug and negative before; drive torque is wrist 3's, tightening positive.
+PRIVILEGED_FIELDS = [
+    {"name": "head_top_minus_tool", "start": 19, "count": 3, "unit": "m", "frame": "base"},
+    {"name": "bolt_axis", "start": 22, "count": 3, "unit": "1", "frame": "base"},
+    {"name": "bolt_angle", "start": 25, "count": 1, "unit": "rad"},
+    {"name": "installed_torque", "start": 26, "count": 1, "unit": "N*m", "scale": 16.0},
+    {"name": "drive_torque", "start": 27, "count": 1, "unit": "N*m", "scale": 20.0},
+    {"name": "engaged", "start": 28, "count": 1, "unit": "1 if seated"}]
+
 
 class ClampEnv(DirectRLEnv):
     cfg: ClampEnvCfg
@@ -455,7 +465,7 @@ class ClampPoseEnv(ClampEnv):
         return channels.catalogue(self.spec.id, round(1 / self.step_dt), [wire.TOOL_POSE, wire.DONE], ["idle"], [
             channels.proprio_channel(c.arm_joints, self.arm_limits, self.arm_vel_limits),
             channels.wrench_channel(c.wrench_force_range, c.wrench_torque_range), actions.completions_channel(),
-            channels.policy_channel(c.observation_space)])
+            {**channels.policy_channel(c.observation_space), "fields": PRIVILEGED_FIELDS}])
 
     def select(self, names) -> None:
         """The channels the policy selected (the SELECT message). A completion reports the force at the end of a

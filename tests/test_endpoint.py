@@ -243,3 +243,27 @@ def test_with_assisted_commands_the_model_is_told_where_the_socket_points(server
     assert "socket points along (tool z, base frame): 0.0000, 0.0000, 1.0000" in seen[-1]["messages"][-1]["content"]
     assert '"push_mm"' in seen[-1]["messages"][0]["content"]
     assert records["opcode"][0, 0] == wire.TOOL_POSE and np.allclose(records["args"][0, 0, :3], [0.4, 0.0, 0.505])
+
+
+@pytest.mark.unit
+def test_privileged_readings_are_read_by_name_and_give_depth_offset_and_tilt():
+    from solarbench.agents.endpoint import describe
+    from solarbench.tasks.clamp_env import PRIVILEGED_FIELDS
+
+    catalogue = json.loads(json.dumps(CATALOGUE))
+    catalogue["channels"][1] = {"id": 2, "name": "proprio", "dtype": "f4", "shape": [7], "fields": [
+        {"name": "tool_pos", "start": 0, "count": 3, "unit": "m"},
+        {"name": "tool_quat", "start": 3, "count": 4, "unit": "xyzw"}]}
+    catalogue["channels"][4]["fields"] = PRIVILEGED_FIELDS
+    layout = wire.Layout(catalogue, {**make_policy("endpoint:m,privileged=on,url=http://x/v1", catalogue, None)[0]
+                                     .selection})
+    policy = np.zeros((1, 35), np.float32)
+    policy[0, 19:22] = [0.001, 0.0, 0.004]  # head top 4 mm along the axis from the face, 1 mm to the side
+    policy[0, 22:25] = [0.0, 0.0, 1.0]
+    policy[0, 26], policy[0, 27], policy[0, 28] = 0.5, 0.25, 1.0
+    frame = {"clock": np.zeros(1, wire.CLOCK), "proprio": np.array([[0, 0, 0, 1, 0, 0, 0]], np.float32),
+             "completions": np.zeros((1, 2), wire.COMPLETION), "policy": policy}
+    text = describe(catalogue, layout, frame, 0, None)
+    assert "installed_torque [N*m]: 8.0000" in text and "drive_torque [N*m]: 5.0000" in text
+    assert "socket depth on the head: 4.00 mm" in text and "socket axis off the bolt axis: 1.00 mm" in text
+    assert "socket axis tilted from the bolt axis: 0.00 deg" in text  # tool z (0, 0, -1) against the axis (0, 0, 1)
