@@ -222,6 +222,8 @@ def test_assisted_commands_become_poses_from_the_tool_pose_now():
     assert np.allclose(args, [0.4, 0.0, 0.49, 0, 0, 0, 1])
     _, args = parse('{"turn_deg": 400}', here)  # cut to 90 degrees about tool z
     assert np.allclose(args[3:], [0, 0, np.sqrt(0.5), np.sqrt(0.5)])
+    _, args = parse('{"push_mm": 2, "turn_deg": 90}', here)  # press while turning
+    assert np.allclose(args, [0.4, 0.0, 0.502, 0, 0, np.sqrt(0.5), np.sqrt(0.5)])
     assert parse('{"push_mm": "far"}', here) is None and parse('{"turn_deg": 30}') is None  # needs the pose
 
 
@@ -265,5 +267,6 @@ def test_privileged_readings_are_read_by_name_and_give_depth_offset_and_tilt():
              "completions": np.zeros((1, 2), wire.COMPLETION), "policy": policy}
     text = describe(catalogue, layout, frame, 0, None)
     assert "installed_torque [N*m]: 8.0000" in text and "drive_torque [N*m]: 5.0000" in text
-    assert "socket depth on the head: 4.00 mm" in text and "socket axis off the bolt axis: 1.00 mm" in text
+    assert "socket depth on the head: 4.00 mm" in text
+    assert "socket axis off the bolt axis: 1.00 mm, the socket being at -1.00, +0.00, +0.00 mm" in text
     assert "socket axis tilted from the bolt axis: 0.00 deg" in text  # tool z (0, 0, -1) against the axis (0, 0, 1)

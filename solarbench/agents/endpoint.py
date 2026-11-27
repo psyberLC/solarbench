@@ -66,6 +66,7 @@ not be a unit vector. The tool turns as little as it can to get there.
 moves it back.
 - {"turn_deg": a}: turn the tool a degrees about its own z axis, keeping its position. A positive a turns clockwise as \
 seen from behind the tool, which tightens a right-hand thread. At most 90 degrees per command; more is cut to 90.
+- {"push_mm": d, "turn_deg": a}: both at once: turn while pressing (or pulling) along the socket's axis.
 - {"position": [x, y, z], "quaternion": [x, y, z, w]}: a pose for the tool frame in the base frame.
 - {"done": true}: the job is finished or cannot be finished.
 
@@ -81,7 +82,7 @@ Each round also gives what a scripted controller with full knowledge of the simu
 - drive_torque: the torque wrist 3 applies, tightening positive. It is not limited by the force-torque sensor's range.
 - engaged: 1 while the socket counts as seated on the head, 0 otherwise.
 - socket depth on the head (how far the top of the head is inside the socket, negative when the face is short of \
-it), how far the socket's axis is off the bolt's axis, and the angle between them.
+it), how far the socket's axis is off the bolt's axis and in which direction, and the angle between them.
 """
 AGAIN = 'That reply did not end with a command that could be read. Send only the line of JSON.'
 UNREAD = "Your last reply did not end with a command that could be read.\n"
@@ -141,15 +142,13 @@ def _assisted(data: dict, position: np.ndarray, quaternion: np.ndarray):
             delta = np.array([*np.cross(u, v), 1 + u @ v])
             delta /= np.linalg.norm(delta)
         return np.array(point, float), _qmul(delta, quaternion)
-    if "push_mm" in data:
-        if not _number(data["push_mm"]):
+    if "push_mm" in data or "turn_deg" in data:  # either, or both at once: press while turning
+        push, turn = data.get("push_mm", 0), data.get("turn_deg", 0)
+        if not (_number(push) and _number(turn)):
             return None
-        return position + data["push_mm"] / 1000 * _axis(quaternion, 2), quaternion
-    if "turn_deg" in data:
-        if not _number(data["turn_deg"]):
-            return None
-        half = math.radians(max(-90.0, min(90.0, data["turn_deg"]))) / 2
-        return position, _qmul(quaternion, np.array([0.0, 0.0, math.sin(half), math.cos(half)]))
+        half = math.radians(max(-90.0, min(90.0, turn))) / 2
+        return (position + push / 1000 * _axis(quaternion, 2),
+                _qmul(quaternion, np.array([0.0, 0.0, math.sin(half), math.cos(half)])))
     return None
 
 
@@ -219,9 +218,13 @@ def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int) -> list[st
     rel, axis = (np.array(row[fields[k]["start"] : fields[k]["start"] + 3], float) for k in ("head_top_minus_tool",
                                                                                               "bolt_axis"))
     depth = float(rel @ axis)
-    lateral = float(np.linalg.norm(rel - depth * axis))
+    side = -(rel - depth * axis)  # from the bolt's axis to the socket's centre, across the axis
+    lateral = float(np.linalg.norm(side))
     tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(-_axis(_tool_pose(catalogue, frame, env)[1], 2) @ axis)))))
-    return [f"socket depth on the head: {1e3 * depth:.2f} mm", f"socket axis off the bolt axis: {1e3 * lateral:.2f} mm",
+    across = ", ".join(f"{round(1e3 * v, 2) + 0.0:+.2f}" for v in side)  # + 0.0: no "-0.00"
+    return [f"socket depth on the head: {1e3 * depth:.2f} mm",
+            f"socket axis off the bolt axis: {1e3 * lateral:.2f} mm, the socket being at {across} mm (base frame) "
+            "from the axis",
             f"socket axis tilted from the bolt axis: {tilt:.2f} deg"]
 
 
