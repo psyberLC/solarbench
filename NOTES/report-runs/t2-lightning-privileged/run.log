@@ -1,0 +1,46 @@
+I: Initializing Version 2.74.0-release.7316+gl.ec99a64b
+I: Client ID: 63GGRM9A
+I: ThreadId(02) hub_client::client::Client::new Launching client mode=Shared with_cleaner=false cache_path=None cache_size=None
+I: ThreadId(03) launch self=Launcher { discovery_lock: RwLock { lock: RwLock { inner: File { fd: 9, path: "/tmp/hub-psyber.lock", read: false, write: true } } }, mode: Shared, with_cleaner: false, config_file: "/tmp/hub-psyber-7329C90C.config.json" } cmd="hub" "--mode=shared" "--write-config" "/tmp/hub-psyber-7329C90C.config.json" "--"
+I: Not using Hub: Hub not found
+I: Successfully created S3 provider for https://omniverse-content-production.s3-us-west-2.amazonaws.com
+I: Using CloudFront http://dcb18d6mfegct.cloudfront.net/, List = No
+Serving remote assets from the local cache under '~/Projects/solarbench-llm/data/cache/g1'. Each copy is checked against the server before use; delete the directory to force a full re-download.
+Serving remote assets from the local cache under '/tmp'. Each copy is checked against the server before use; delete the directory to force a full re-download.
+Failed to get root com velocity. If the articulation is fixed, this is expected. Setting root com velocity to zeros.
+[INFO]: Parsing configuration from: solarbench.tasks.mc4_env_cfg:MC4EnvCfg
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 0
+	Physics step-size     : 0.0016666666666666668
+	Rendering step-size   : 0.03333333333333333
+	Environment step-size : 0.03333333333333333
+[INFO]: Time taken for scene creation Last: 1.378959 s, Mean: 1.378959 s, Std: 0.000000 s, N: 1
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 1
+	Environment spacing   : 6.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : []
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+Finalize builder took: Last: 0.054229 s, Mean: 0.054229 s, Std: 0.000000 s, N: 1
+Contact sensor construction took: Last: 0.001911 s, Mean: 0.001911 s, Std: 0.000000 s, N: 1
+Contact sensor construction took: Last: 0.000498 s, Mean: 0.001205 s, Std: 0.001000 s, N: 2
+Contact sensor construction took: Last: 0.000349 s, Mean: 0.000919 s, Std: 0.000863 s, N: 3
+Initialize solver took: Last: 1.207491 s, Mean: 1.207491 s, Std: 0.000000 s, N: 1
+[INFO]: Time taken for simulation start Last: 1.412498 s, Mean: 1.412498 s, Std: 0.000000 s, N: 1
+[INFO]: Completed setting up the environment...
+CUDA graph took: Last: 0.353237 s, Mean: 0.353237 s, Std: 0.000000 s, N: 1
+
+== SolarBench-T2-MC4-G1-v0 | phases:NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_0,notes=NOTES/probes/job_mc4.md | dev | newton | 8/8 valid
+  stage_grasped          100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  stage_unlocked         100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  stage_separated        100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  stage_realigned        100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  stage_relatched        100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  stage_released         100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  success                100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  safe_success           100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  damage                   0.0%  95% CI [0.0%, 32.4%]  (0/8)
+  sim_error_rate         0.0%
+  wrote NOTES/report-runs/t2-lightning-privileged/SolarBench-T2-MC4-G1-v0/phases-NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4-0_dev_newton.json

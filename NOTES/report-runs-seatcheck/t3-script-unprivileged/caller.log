@@ -1,0 +1,289 @@
+scripted skills caller on port 8085, tightening to 15.5 N·m
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42013, 0.01525, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.3 s: the head is 2.8 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.53 N·m after turning 188 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.09 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42031, 0.01511, 0.43949], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 3.5 s: the head is 2.6 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.51 N·m after turning 237 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.04 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42012, 0.01524, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 3.3 s: the head is 2.5 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.53 N·m after turning 229 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.01 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42026, 0.01525, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 0.8 s: the head is 2.9 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.50 N·m after turning 217 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.04 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42014, 0.01526, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 3.3 s: the head is 2.5 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.52 N·m after turning 231 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.12 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42011, 0.01523, 0.43945], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 0.5 s: the head is 2.9 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.52 N·m after turning 215 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.08 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42043, 0.01509, 0.4395], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 0.6 s: the head is 2.5 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.54 N·m after turning 206 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.06 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42048, 0.01511, 0.43949], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.3 s: the head is 2.6 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.52 N·m after turning 197 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.08 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.4202, 0.01526, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 0.3 s: the head is 2.6 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.51 N·m after turning 225 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.08 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42015, 0.01527, 0.43943], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: not seated after searching 75 degrees (5.3 s): the socket is about 1.9 mm onto the head (2.5 mm counts as seated), likely wedged on the corners; tighten_to's firmer press can finish seating it
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped by the time limit at drive torque 14.69 N·m
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.12 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42012, 0.01521, 0.43946], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.1 s: the head is 2.7 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.52 N·m after turning 242 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.12 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42009, 0.01523, 0.43945], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 1.0 s: the head is 2.8 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.50 N·m after turning 200 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.04 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42033, 0.01514, 0.43948], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.6 s: the head is 2.7 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.53 N·m after turning 193 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.09 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42037, 0.01513, 0.43948], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 4.0 s: the head is 2.5 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.52 N·m after turning 217 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.04 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.4201, 0.01523, 0.43945], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 0.6 s: the head is 3.1 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.51 N·m after turning 208 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.06 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.4204, 0.01507, 0.43951], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.4 s: the head is 2.9 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.51 N·m after turning 184 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.11 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42014, 0.01521, 0.43945], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: not seated after searching 75 degrees (5.3 s): the socket is about 2.1 mm onto the head (2.5 mm counts as seated), likely wedged on the corners; tighten_to's firmer press can finish seating it
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.53 N·m after turning 207 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.00 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42015, 0.01526, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: not seated after searching 106 degrees (7.4 s): the socket is about 0.5 mm onto the head (2.5 mm counts as seated), likely wedged on the corners; tighten_to's firmer press can finish seating it
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.51 N·m after turning 242 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.12 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42014, 0.01525, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: not seated after searching 75 degrees (5.3 s): the socket is about 2.5 mm onto the head (2.5 mm counts as seated), likely wedged on the corners; tighten_to's firmer press can finish seating it
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.52 N·m after turning 202 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.05 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42008, 0.01523, 0.43945], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.6 s: the head is 2.7 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.52 N·m after turning 248 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.01 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42044, 0.01512, 0.43949], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 1.5 s: the head is 2.8 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.54 N·m after turning 190 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.03 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42036, 0.01515, 0.43948], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 0.5 s: the head is 2.9 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped by the time limit at drive torque 15.43 N·m
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.02 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42015, 0.01526, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.8 s: the head is 2.7 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.50 N·m after turning 235 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.07 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42018, 0.01524, 0.43944], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.4 s: the head is 2.7 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.51 N·m after turning 244 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.06 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.4204, 0.01506, 0.43951], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 1.4 s: the head is 2.6 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.53 N·m after turning 193 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.03 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42047, 0.01513, 0.43949], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 2.0 s: the head is 2.8 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.50 N·m after turning 191 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.04 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42016, 0.01522, 0.43945], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 1.6 s: the head is 2.6 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.51 N·m after turning 212 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.10 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42017, 0.01527, 0.43943], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 0.5 s: the head is 3.0 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.52 N·m after turning 216 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.02 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42034, 0.01511, 0.43949], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 3.8 s: the head is 2.5 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped by the time limit at drive torque 14.63 N·m
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.07 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42046, 0.01504, 0.43952], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: not seated after searching 101 degrees (7.1 s): the socket is about 0.5 mm onto the head (2.5 mm counts as seated), likely wedged on the corners; tighten_to's firmer press can finish seating it
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.53 N·m after turning 240 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque 0.08 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42017, 0.01527, 0.43943], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 3.9 s: the head is 2.8 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.53 N·m after turning 232 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.00 N·m
+turn 6: retract({"mm": 50})
+turn 1: aim({"aim": [0.42, 0.0321, 0.48599], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 2: aim({"aim": [0.42032, 0.01514, 0.43948], "socket_toward": [0.0, -0.3419, -0.9397]})
+turn 3: seat({})
+  result: seat finished: seated after 3.3 s: the head is 2.5 mm inside the socket
+turn 4: tighten_to({"torque_Nm": 15.5})
+  result: tighten_to finished: stopped at drive torque 15.50 N·m after turning 233 degrees
+turn 5: unload({})
+  result: unload finished: unloaded: drive torque -0.08 N·m
+turn 6: retract({"mm": 50})

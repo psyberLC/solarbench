@@ -1,0 +1,158 @@
+{
+ "schema_version": 1,
+ "task": "SolarBench-T3-ClampTighten-UR16e-R2-v0",
+ "policy": "endpoint:NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_0,wrench=on,reasoning=on,temperature=0.6,max_tokens=12288,rounds=30,commands=pose,privileged=on,tools=on,skills=on",
+ "privileged": true,
+ "split": "dev",
+ "tag": "",
+ "provenance": {
+  "date": "2026-11-27T12:33:01+00:00",
+  "solarbench_git": "55d2c5d9c11c9531e98922e252b41050a7445e8a",
+  "solarbench_dirty": true,
+  "versions": {
+   "isaaclab": "3.0.0",
+   "newton": "1.6.1",
+   "warp-lang": "1.17.0",
+   "mujoco-warp": "3.12.0",
+   "torch": "2.11.0",
+   "ovphysx": "0.6.4.72118723"
+  },
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "python": "3.12.3",
+  "physics": "NewtonCfg",
+  "physics_dt": 0.0016666666666666668,
+  "decimation": 20,
+  "hydra_overrides": [
+   "env.episode_length_s=400"
+  ]
+ },
+ "summary": {
+  "episodes": 1,
+  "valid_episodes": 1,
+  "sim_error_rate": 0.0,
+  "stage_engaged": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "stage_snug": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "stage_in_spec": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "stage_released": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "success": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "safe_success": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "damage": {
+   "rate": 0.0,
+   "ci95": [
+    0.0,
+    0.7934506882081973
+   ],
+   "k": 0,
+   "n": 1
+  },
+  "time_to_success_s": {
+   "mean": 10.466666666666667,
+   "lo": 10.466666666666667,
+   "hi": 10.466666666666667
+  },
+  "installed_torque_Nm": {
+   "mean": 15.573984146118164,
+   "lo": 15.573984146118164,
+   "hi": 15.573984146118164,
+   "max": 15.573984146118164
+  },
+  "peak_installed_torque_Nm": {
+   "mean": 15.573984146118164,
+   "lo": 15.573984146118164,
+   "hi": 15.573984146118164,
+   "max": 15.573984146118164
+  },
+  "preload_N": {
+   "mean": 12067.4521484375,
+   "lo": 12067.4521484375,
+   "hi": 12067.4521484375,
+   "max": 12067.4521484375
+  },
+  "vel_limit_violation_steps": {
+   "mean": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "max": 0
+  }
+ },
+ "episodes": [
+  {
+   "t_engaged": 3.766666889190674,
+   "t_snug": 6.6666669845581055,
+   "t_in_spec": 8.733333587646484,
+   "t_released": 10.466667175292969,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 0,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 15.573984146118164,
+   "peak_installed_torque_Nm": 15.573984146118164,
+   "preload_N": 12067.4521484375,
+   "bolt_angle_change_rad": 3.1409249305725098,
+   "bolt_params": {
+    "tau_run_Nm": 0.9458731412887573,
+    "stiffness_Nm_per_rad": 32.875396728515625,
+    "breakaway_ratio": 0.8081946969032288,
+    "nut_factor": 0.1613222062587738,
+    "theta0_rad": -2.6959688663482666
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 10.466666666666667
+  }
+ ]
+}

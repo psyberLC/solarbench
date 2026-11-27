@@ -1,0 +1,59 @@
+scripted skills caller on port 8085, tightening to 15.5 N·m
+turn 1: grasp({})
+  result: grasp finished
+turn 2: unplug({})
+  result: unplug finished
+turn 3: plug_in({})
+  result: plug_in finished
+turn 4: release({})
+turn 1: grasp({})
+  result: grasp finished
+turn 2: unplug({})
+  result: unplug finished
+turn 3: plug_in({})
+  result: plug_in finished
+turn 4: release({})
+turn 1: grasp({})
+  result: grasp finished
+turn 2: unplug({})
+  result: unplug finished
+turn 3: plug_in({})
+  result: plug_in finished
+turn 4: release({})
+turn 1: grasp({})
+  result: grasp finished
+turn 2: unplug({})
+  result: unplug finished
+turn 3: plug_in({})
+  result: plug_in finished
+turn 4: release({})
+turn 1: grasp({})
+  result: grasp finished
+turn 2: unplug({})
+  result: unplug finished
+turn 3: plug_in({})
+  result: plug_in finished
+turn 4: release({})
+turn 1: grasp({})
+  result: grasp finished
+turn 2: unplug({})
+  result: unplug finished
+turn 3: plug_in({})
+  result: plug_in finished
+turn 4: release({})
+turn 1: grasp({})
+  result: grasp finished
+turn 2: unplug({})
+  result: unplug finished
+turn 3: plug_in({})
+  result: plug_in finished
+turn 4: release({})
+turn 1: grasp({})
+  result: grasp finished
+turn 2: unplug({})
+  result: unplug finished
+turn 3: plug_in({})
+  result: plug_in finished
+turn 4: release({})
+  result: release stopped by its 4 s limit
+turn 5: done({})

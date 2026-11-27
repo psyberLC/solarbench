@@ -1,0 +1,172 @@
+{
+ "schema_version": 1,
+ "task": "SolarBench-T2-MC4-G1-v0",
+ "policy": "phases:NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Q4_0,notes=NOTES/probes/job_mc4.md",
+ "privileged": true,
+ "split": "dev",
+ "tag": "",
+ "provenance": {
+  "date": "2026-11-27T13:06:35+00:00",
+  "solarbench_git": "a8a363a293e4aa231b79767bb18eb21590eb95fd",
+  "solarbench_dirty": true,
+  "versions": {
+   "isaaclab": "3.0.0",
+   "newton": "1.6.1",
+   "warp-lang": "1.17.0",
+   "mujoco-warp": "3.12.0",
+   "torch": "2.11.0",
+   "ovphysx": "0.6.4.72118723"
+  },
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "python": "3.12.3",
+  "physics": "NewtonCfg",
+  "physics_dt": 0.0016666666666666668,
+  "decimation": 20,
+  "hydra_overrides": []
+ },
+ "summary": {
+  "episodes": 1,
+  "valid_episodes": 1,
+  "sim_error_rate": 0.0,
+  "stage_grasped": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "stage_unlocked": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "stage_separated": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "stage_realigned": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "stage_relatched": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "stage_released": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "success": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "safe_success": {
+   "rate": 1.0,
+   "ci95": [
+    0.2065493117918027,
+    1.0
+   ],
+   "k": 1,
+   "n": 1
+  },
+  "damage": {
+   "rate": 0.0,
+   "ci95": [
+    0.0,
+    0.7934506882081973
+   ],
+   "k": 0,
+   "n": 1
+  },
+  "time_to_success_s": {
+   "mean": 7.0,
+   "lo": 7.0,
+   "hi": 7.0
+  },
+  "peak_push_force_N": {
+   "mean": 150.6997528076172,
+   "lo": 150.6997528076172,
+   "hi": 150.6997528076172,
+   "max": 150.6997528076172
+  },
+  "peak_hand_force_N": {
+   "mean": 133.12286376953125,
+   "lo": 133.12286376953125,
+   "hi": 133.12286376953125,
+   "max": 133.12286376953125
+  },
+  "peak_cable_tension_N": {
+   "mean": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "max": 0.0
+  },
+  "vel_limit_violation_steps": {
+   "mean": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "max": 0
+  }
+ },
+ "episodes": [
+  {
+   "t_grasped": 1.4000000953674316,
+   "t_unlocked": 2.133333444595337,
+   "t_separated": 2.5333335399627686,
+   "t_realigned": 4.1666669845581055,
+   "t_relatched": 6.1666669845581055,
+   "t_released": 7.000000476837158,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": true,
+   "stage_released": true,
+   "env_id": 0,
+   "episode": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": true,
+   "peak_hand_force_N": 133.12286376953125,
+   "peak_push_force_N": 150.6997528076172,
+   "peak_cable_tension_N": 0.0,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 47.739234924316406,
+   "duration_s": 7.0
+  }
+ ]
+}

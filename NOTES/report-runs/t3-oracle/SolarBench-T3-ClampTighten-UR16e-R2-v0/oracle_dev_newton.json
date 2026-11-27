@@ -1,0 +1,366 @@
+{
+ "schema_version": 1,
+ "task": "SolarBench-T3-ClampTighten-UR16e-R2-v0",
+ "policy": "oracle",
+ "privileged": true,
+ "split": "dev",
+ "tag": "",
+ "provenance": {
+  "date": "2026-11-27T13:10:11+00:00",
+  "solarbench_git": "b99300084a9bfd01b3380f44f76c1170f1437729",
+  "solarbench_dirty": true,
+  "versions": {
+   "isaaclab": "3.0.0",
+   "newton": "1.6.1",
+   "warp-lang": "1.17.0",
+   "mujoco-warp": "3.12.0",
+   "torch": "2.11.0",
+   "ovphysx": "0.6.4.72118723"
+  },
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "python": "3.12.3",
+  "physics": "NewtonCfg",
+  "physics_dt": 0.0016666666666666668,
+  "decimation": 20,
+  "hydra_overrides": []
+ },
+ "summary": {
+  "episodes": 8,
+  "valid_episodes": 8,
+  "sim_error_rate": 0.0,
+  "stage_engaged": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "stage_snug": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "stage_in_spec": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "stage_released": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "success": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "safe_success": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "damage": {
+   "rate": 0.0,
+   "ci95": [
+    0.0,
+    0.3244075683414076
+   ],
+   "k": 0,
+   "n": 8
+  },
+  "time_to_success_s": {
+   "mean": 14.862499999999999,
+   "lo": 13.804166666666667,
+   "hi": 15.804166666666665
+  },
+  "installed_torque_Nm": {
+   "mean": 16.041635036468506,
+   "lo": 16.029152154922485,
+   "hi": 16.056893587112427,
+   "max": 16.083410263061523
+  },
+  "peak_installed_torque_Nm": {
+   "mean": 16.041635036468506,
+   "lo": 16.029152154922485,
+   "hi": 16.056893587112427,
+   "max": 16.083410263061523
+  },
+  "preload_N": {
+   "mean": 10525.838745117188,
+   "lo": 9711.575439453125,
+   "hi": 11310.9599609375,
+   "max": 12462.1787109375
+  },
+  "vel_limit_violation_steps": {
+   "mean": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "max": 0
+  }
+ },
+ "episodes": [
+  {
+   "t_engaged": 6.300000190734863,
+   "t_snug": 9.166666984558105,
+   "t_in_spec": 11.200000762939453,
+   "t_released": 13.466667175292969,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 0,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 16.083410263061523,
+   "peak_installed_torque_Nm": 16.083410263061523,
+   "preload_N": 12462.1787109375,
+   "bolt_angle_change_rad": 3.1564207077026367,
+   "bolt_params": {
+    "tau_run_Nm": 0.9458731412887573,
+    "stiffness_Nm_per_rad": 32.875396728515625,
+    "breakaway_ratio": 0.8081946969032288,
+    "nut_factor": 0.1613222062587738,
+    "theta0_rad": -2.6959688663482666
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 13.466666666666667
+  },
+  {
+   "t_engaged": 7.700000286102295,
+   "t_snug": 11.300000190734863,
+   "t_in_spec": 14.40000057220459,
+   "t_released": 16.900001525878906,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 1,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 16.04983901977539,
+   "peak_installed_torque_Nm": 16.04983901977539,
+   "preload_N": 8482.244140625,
+   "bolt_angle_change_rad": 4.01473331451416,
+   "bolt_params": {
+    "tau_run_Nm": 1.1228171586990356,
+    "stiffness_Nm_per_rad": 25.970232009887695,
+    "breakaway_ratio": 0.9601816534996033,
+    "nut_factor": 0.23652109503746033,
+    "theta0_rad": -3.4399592876434326
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 16.9
+  },
+  {
+   "t_engaged": 8.300000190734863,
+   "t_snug": 11.800000190734863,
+   "t_in_spec": 13.80000114440918,
+   "t_released": 16.13333511352539,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 2,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 16.0468807220459,
+   "peak_installed_torque_Nm": 16.0468807220459,
+   "preload_N": 11688.6142578125,
+   "bolt_angle_change_rad": 3.852893829345703,
+   "bolt_params": {
+    "tau_run_Nm": 0.5565768480300903,
+    "stiffness_Nm_per_rad": 30.223434448242188,
+    "breakaway_ratio": 0.9202578663825989,
+    "nut_factor": 0.17160801589488983,
+    "theta0_rad": -3.340367555618286
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 16.133333333333333
+  },
+  {
+   "t_engaged": 5.766666889190674,
+   "t_snug": 8.866666793823242,
+   "t_in_spec": 12.333333969116211,
+   "t_released": 15.2333345413208,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 3,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 16.020490646362305,
+   "peak_installed_torque_Nm": 16.020490646362305,
+   "preload_N": 10804.2158203125,
+   "bolt_angle_change_rad": 3.6377830505371094,
+   "bolt_params": {
+    "tau_run_Nm": 1.1264809370040894,
+    "stiffness_Nm_per_rad": 21.42646598815918,
+    "breakaway_ratio": 0.8642749786376953,
+    "nut_factor": 0.1853499710559845,
+    "theta0_rad": -2.9426610469818115
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 15.233333333333333
+  },
+  {
+   "t_engaged": 7.633333683013916,
+   "t_snug": 11.266667366027832,
+   "t_in_spec": 12.966667175292969,
+   "t_released": 15.166666984558105,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 4,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 16.04411506652832,
+   "peak_installed_torque_Nm": 16.04411506652832,
+   "preload_N": 10246.044921875,
+   "bolt_angle_change_rad": 3.9012033939361572,
+   "bolt_params": {
+    "tau_run_Nm": 1.1181503534317017,
+    "stiffness_Nm_per_rad": 33.7122802734375,
+    "breakaway_ratio": 0.8821293115615845,
+    "nut_factor": 0.19573545455932617,
+    "theta0_rad": -3.4584577083587646
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 15.166666666666666
+  },
+  {
+   "t_engaged": 5.266666889190674,
+   "t_snug": 8.433333396911621,
+   "t_in_spec": 11.266667366027832,
+   "t_released": 13.766667366027832,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 5,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 16.017202377319336,
+   "peak_installed_torque_Nm": 16.017202377319336,
+   "preload_N": 10564.75390625,
+   "bolt_angle_change_rad": 3.596468925476074,
+   "bolt_params": {
+    "tau_run_Nm": 0.7674952745437622,
+    "stiffness_Nm_per_rad": 26.765974044799805,
+    "breakaway_ratio": 0.8822876214981079,
+    "nut_factor": 0.1895122528076172,
+    "theta0_rad": -3.026726722717285
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 13.766666666666666
+  },
+  {
+   "t_engaged": 5.500000476837158,
+   "t_snug": 8.666666984558105,
+   "t_in_spec": 10.233333587646484,
+   "t_released": 12.466667175292969,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 6,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 16.043941497802734,
+   "peak_installed_torque_Nm": 16.043941497802734,
+   "preload_N": 9846.6318359375,
+   "bolt_angle_change_rad": 3.4472780227661133,
+   "bolt_params": {
+    "tau_run_Nm": 0.7884646654129028,
+    "stiffness_Nm_per_rad": 34.94349670410156,
+    "breakaway_ratio": 0.9457517862319946,
+    "nut_factor": 0.20367296040058136,
+    "theta0_rad": -3.01070237159729
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 12.466666666666667
+  },
+  {
+   "t_engaged": 6.6666669845581055,
+   "t_snug": 9.466667175292969,
+   "t_in_spec": 13.033333778381348,
+   "t_released": 15.766667366027832,
+   "stage_engaged": true,
+   "stage_snug": true,
+   "stage_in_spec": true,
+   "stage_released": true,
+   "episode": 7,
+   "env_id": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "over_torque": false,
+   "safe_success": true,
+   "installed_torque_Nm": 16.02720069885254,
+   "peak_installed_torque_Nm": 16.02720069885254,
+   "preload_N": 10112.0263671875,
+   "bolt_angle_change_rad": 3.3188178539276123,
+   "bolt_params": {
+    "tau_run_Nm": 0.5272027254104614,
+    "stiffness_Nm_per_rad": 23.413442611694336,
+    "breakaway_ratio": 0.9598338603973389,
+    "nut_factor": 0.19812053442001343,
+    "theta0_rad": -2.6568050384521484
+   },
+   "vel_limit_violation_steps": 0,
+   "duration_s": 15.766666666666666
+  }
+ ]
+}

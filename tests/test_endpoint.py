@@ -3,6 +3,7 @@
 import json
 import os
 import threading
+import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
@@ -11,7 +12,7 @@ import torch
 
 from solarbench import wire
 from solarbench.agents import make_policy, prompts
-from solarbench.agents.endpoint import parse
+from solarbench.agents.endpoint import parse, parse_call
 
 TASK = "SolarBench-T3-ClampTighten-UR16e-R2-v0"
 CATALOGUE = {
@@ -43,7 +44,8 @@ def server(monkeypatch):
             seen.append({"path": self.path, "key": self.headers.get("Authorization"), **body})
             if together:
                 together[0].wait()  # answers only once that many requests are in flight at the same time
-            answer = {"choices": [{"message": {"content": replies.pop(0) if replies else POSE}}],
+            reply = replies.pop(0) if replies else POSE  # a reply text, or a whole message (tool calls)
+            answer = {"choices": [{"message": reply if isinstance(reply, dict) else {"content": reply}}],
                       "usage": {"prompt_tokens": 900, "completion_tokens": 40}}
             data = json.dumps(answer).encode()
             self.send_response(200)
@@ -206,3 +208,167 @@ def test_the_address_comes_from_the_name_or_the_environment(server, monkeypatch)
         make_policy("endpoint:m", CATALOGUE, None)
     with pytest.raises(ValueError, match="got 'm,colour=red'"):
         make_policy("endpoint:m,colour=red", CATALOGUE, None)
+
+
+@pytest.mark.unit
+def test_assisted_commands_become_poses_from_the_tool_pose_now():
+    from solarbench.agents.endpoint import _axis
+
+    here = (np.array([0.4, 0.0, 0.5]), np.array([0.0, 0.0, 0.0, 1.0]))  # socket pointing up (+z)
+    opcode, args = parse('{"aim": [0.42, 0.015, 0.44], "socket_toward": [0, -0.342, -0.94]}', here)
+    assert opcode == wire.TOOL_POSE and args[:3] == [0.42, 0.015, 0.44]
+    assert np.allclose(_axis(args[3:], 2), np.array([0, -0.342, -0.94]) / np.hypot(0.342, 0.94), atol=1e-6)
+    _, args = parse('{"aim": [0, 0, 0], "socket_toward": [0, 0, -2]}', here)  # straight back: half a turn about x
+    assert np.allclose(np.abs(args[3:]), [1, 0, 0, 0], atol=1e-6)
+    _, args = parse('{"push_mm": -10}', here)
+    assert np.allclose(args, [0.4, 0.0, 0.49, 0, 0, 0, 1])
+    _, args = parse('{"turn_deg": 400}', here)  # cut to 90 degrees about tool z
+    assert np.allclose(args[3:], [0, 0, np.sqrt(0.5), np.sqrt(0.5)])
+    _, args = parse('{"push_mm": 2, "turn_deg": 90}', here)  # press while turning
+    assert np.allclose(args, [0.4, 0.0, 0.502, 0, 0, np.sqrt(0.5), np.sqrt(0.5)])
+    assert parse('{"push_mm": "far"}', here) is None and parse('{"turn_deg": 30}') is None  # needs the pose
+
+
+@pytest.mark.unit
+def test_with_assisted_commands_the_model_is_told_where_the_socket_points(server):
+    seen, replies, _ = server
+    catalogue = json.loads(json.dumps(CATALOGUE))
+    catalogue["channels"][1] = {"id": 2, "name": "proprio", "dtype": "f4", "shape": [7], "fields": [
+        {"name": "tool_pos", "start": 0, "count": 3, "unit": "m"}, {"name": "tool_quat", "start": 3, "count": 4,
+                                                                    "unit": "xyzw"}]}
+    policy, layout = make_policy("endpoint:m,commands=assist", catalogue, None)
+    assert policy.name.endswith("-assist") and policy.settings["commands"] == "assist"
+    policy.reset(torch.arange(1), ["work order"])
+    obs = {"clock": torch.tensor([[0, wire.FIRST | wire.AWAKE]], dtype=torch.int32),
+           "proprio": torch.tensor([[0.4, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0]]),
+           "completions": torch.zeros(1, 2, 8, dtype=torch.int32)}
+    replies.append('{"push_mm": 5}')
+    records = policy.act(obs).numpy().view(wire.COMMAND)[..., 0]
+    assert "socket points along (tool z, base frame): 0.0000, 0.0000, 1.0000" in seen[-1]["messages"][-1]["content"]
+    assert '"push_mm"' in seen[-1]["messages"][0]["content"]
+    assert records["opcode"][0, 0] == wire.TOOL_POSE and np.allclose(records["args"][0, 0, :3], [0.4, 0.0, 0.505])
+
+
+@pytest.mark.unit
+def test_privileged_readings_are_read_by_name_and_give_depth_offset_and_tilt():
+    from solarbench.agents.endpoint import describe
+    from solarbench.tasks.clamp_env import PRIVILEGED_FIELDS
+
+    catalogue = json.loads(json.dumps(CATALOGUE))
+    catalogue["channels"][1] = {"id": 2, "name": "proprio", "dtype": "f4", "shape": [7], "fields": [
+        {"name": "tool_pos", "start": 0, "count": 3, "unit": "m"},
+        {"name": "tool_quat", "start": 3, "count": 4, "unit": "xyzw"}]}
+    catalogue["channels"][4]["fields"] = PRIVILEGED_FIELDS
+    layout = wire.Layout(catalogue, {**make_policy("endpoint:m,privileged=on,url=http://x/v1", catalogue, None)[0]
+                                     .selection})
+    policy = np.zeros((1, 35), np.float32)
+    policy[0, 19:22] = [0.001, 0.0, 0.004]  # head top 4 mm along the axis from the face, 1 mm to the side
+    policy[0, 22:25] = [0.0, 0.0, 1.0]
+    policy[0, 26], policy[0, 27], policy[0, 28] = 0.5, 0.25, 1.0
+    frame = {"clock": np.zeros(1, wire.CLOCK), "proprio": np.array([[0, 0, 0, 1, 0, 0, 0]], np.float32),
+             "completions": np.zeros((1, 2), wire.COMPLETION), "policy": policy}
+    text = describe(catalogue, layout, frame, 0, None)
+    assert "installed_torque [N*m]: 8.0000" in text and "drive_torque [N*m]: 5.0000" in text
+    assert "socket depth on the head: 4.00 mm (the top of the head is 4.00 mm inside the socket)" in text
+    assert "socket axis off the bolt axis: 1.00 mm (the socket's centre is at -1.00, 0.00, 0.00 mm" in text
+    assert "socket axis tilted from the bolt axis: 0.00 deg" in text  # tool z (0, 0, -1) against the axis (0, 0, 1)
+    here = '{"aim": [0.00100, 0.00000, 0.00000], "socket_toward": [0.0000, 0.0000, -1.0000]}'
+    assert f"to centre the socket on the axis where it is now: {here}" in text  # no earlier pose: the axis itself
+    # the last pose asked for 0.5 mm to one side of the axis and the socket settled 1 mm to the other: aim 1.5 mm over
+    text = describe(catalogue, layout, frame, 0, None, target=np.array([0.0015, 0.0, 0.0]))
+    assert '"aim": [0.00250, 0.00000, 0.00450]' in text  # 0.5 mm out from the head top (z 4 mm), shifted by the error
+    assert '50 mm out from the head top on the axis: {"aim": [0.00250, 0.00000, 0.05400]' in text
+
+
+@pytest.mark.unit
+def test_notes_are_appended_to_the_system_message(tmp_path):
+    notes = tmp_path / "lessons.md"
+    notes.write_text("## Notes\nPress lightly.\n")
+    policy, _ = make_policy(f"endpoint:m,url=http://x/v1,notes={notes}", CATALOGUE, None)
+    assert policy._system.endswith("## Notes\nPress lightly.\n") and policy.settings["notes"] == "lessons.md"
+
+
+@pytest.mark.unit
+def test_kept_thinking_goes_back_with_the_reply_and_the_template_is_told(server):
+    seen, replies, _ = server
+    policy, layout = make_policy("endpoint:m,keep_thinking=on", CATALOGUE, None)
+    policy.reset(torch.arange(1), ["work order"])
+    policy._ask(0, "state 1", 0)
+    policy._ask(0, "state 2", 1)
+    assert seen[-1]["chat_template_kwargs"] == {"enable_thinking": True, "truncate_history_thinking": False}
+    assert policy.settings["keep_thinking"] is True
+
+
+@pytest.mark.unit
+def test_with_tools_each_state_is_the_result_of_the_last_call_and_thinking_stays(server):
+    seen, replies, _ = server
+    catalogue = json.loads(json.dumps(CATALOGUE))
+    catalogue["channels"][1] = {"id": 2, "name": "proprio", "dtype": "f4", "shape": [7], "fields": [
+        {"name": "tool_pos", "start": 0, "count": 3, "unit": "m"},
+        {"name": "tool_quat", "start": 3, "count": 4, "unit": "xyzw"}]}
+    policy, _ = make_policy("endpoint:m,tools=on", catalogue, None)
+    assert policy.name.endswith("-tools") and "call exactly one tool" in policy._system
+    policy.reset(torch.arange(1), ["work order"])
+    obs = {"clock": torch.tensor([[0, wire.FIRST | wire.AWAKE]], dtype=torch.int32),
+           "proprio": torch.tensor([[0.4, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0]]),
+           "completions": torch.zeros(1, 2, 8, dtype=torch.int32)}
+    call = {"id": "c1", "type": "function", "function": {"name": "push", "arguments": '{"mm": 5}'}}
+    replies += [{"content": "", "reasoning_content": "press it on", "tool_calls": [call]},
+                {"content": "I am done talking."},  # no call: asked again with another seed...
+                {"content": "Still talking."}]  # ...and then counted as unreadable
+    records = policy.act(obs).numpy().view(wire.COMMAND)[..., 0]
+    assert np.allclose(records["args"][0, 0, :3], [0.4, 0.0, 0.505]) and seen[0]["tools"][0]["function"]["name"]
+    assert "## The robot now" in seen[0]["messages"][1]["content"]
+    obs["clock"] = torch.tensor([[16, wire.AWAKE]], dtype=torch.int32)
+    assert policy.act(obs) is not None and policy._unread == {0}
+    sent = seen[1]["messages"]
+    assert sent[2] == {"role": "assistant", "content": "", "reasoning_content": "press it on", "tool_calls": [call]}
+    assert sent[3]["role"] == "tool" and sent[3]["tool_call_id"] == "c1"
+    assert (seen[1]["seed"], seen[2]["seed"]) == (0, 1)
+    assert parse_call({"function": {"name": "turn", "arguments": "not json"}}, (np.zeros(3), np.eye(4)[3])) is None
+
+
+@pytest.mark.unit
+def test_thinking_is_read_under_either_field_name():
+    from solarbench.agents.endpoint import _thought
+
+    assert _thought({"reasoning_content": "a"}) == "a" and _thought({"reasoning": "b"}) == "b" and _thought({}) == ""
+
+
+@pytest.mark.unit
+def test_a_tunnelled_endpoint_can_be_recorded_as_remote():
+    policy, _ = make_policy("endpoint:m,url=http://127.0.0.1:8000/v1,host=remote", CATALOGUE, None)
+    assert policy.settings["endpoint"] == "remote"
+    assert make_policy("endpoint:m,url=http://127.0.0.1:8000/v1", CATALOGUE, None)[0].settings["endpoint"] == "local"
+
+
+@pytest.mark.unit
+def test_a_busy_server_is_waited_for_and_other_errors_stop_the_run(monkeypatch):
+    from solarbench.agents import endpoint
+
+    codes = [429, 429, 200, 500]
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            code, data = codes.pop(0), b'{"choices": []}'
+            self.send_response(code)
+            if code == 429:
+                self.send_header("Retry-After", "0")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, *args):
+            pass
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    monkeypatch.setattr(endpoint, "WAIT_S", 0.0)
+    url = f"http://127.0.0.1:{httpd.server_port}/v1/chat/completions"
+    try:
+        assert endpoint.post(url, {}) == {"choices": []} and codes == [500]
+        with pytest.raises(urllib.error.HTTPError):
+            endpoint.post(url, {})
+    finally:
+        httpd.shutdown()
