@@ -150,3 +150,16 @@ class ClampEnvCfg(DirectRLEnvCfg):
 @configclass
 class ClampLoosenEnvCfg(ClampEnvCfg):
     mode: str = "loosen"
+
+
+@configclass
+class ClampPoseEnvCfg(ClampEnvCfg):
+    """Profile R2: one tool pose per command (ASSUMPTIONS M13). Steps per tick are R1's max_tcp_step and
+    max_rot_step."""
+
+    pose_timeout_s: float = 10.0  # a command whose record gives no timeout
+    pose_pos_tol: float = 0.0005  # arrived: measured tool position within this of the target...
+    pose_rot_tol: float = 0.005  # ...and orientation within this (rad)
+    pose_stall_s: float = 0.5  # stalled: no progress for this long, where progress is the error falling by
+    pose_stall_pos: float = 0.0002  # this much (m) below its best...
+    pose_stall_rot: float = 0.002  # ...or this much (rad)

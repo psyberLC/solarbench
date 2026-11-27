@@ -1,0 +1,253 @@
+I: Initializing Version 2.74.0-release.7316+gl.ec99a64b
+I: Client ID: 3HWXD1RW
+I: ThreadId(02) hub_client::client::Client::new Launching client mode=Shared with_cleaner=false cache_path=None cache_size=None
+I: ThreadId(03) launch self=Launcher { discovery_lock: RwLock { lock: RwLock { inner: File { fd: 9, path: "/tmp/hub-psyber.lock", read: false, write: true } } }, mode: Shared, with_cleaner: false, config_file: "/tmp/hub-psyber-68BAA93D.config.json" } cmd="hub" "--mode=shared" "--write-config" "/tmp/hub-psyber-68BAA93D.config.json" "--"
+I: Not using Hub: Hub not found
+I: Successfully created S3 provider for https://omniverse-content-production.s3-us-west-2.amazonaws.com
+I: Using CloudFront http://dcb18d6mfegct.cloudfront.net/, List = No
+~/Projects/solarbench-llm/.venv/lib/python3.12/site-packages/moviepy/config_defaults.py:1: SyntaxWarning: invalid escape sequence '\P'
+  """
+~/Projects/solarbench-llm/.venv/lib/python3.12/site-packages/moviepy/video/io/ffmpeg_reader.py:294: SyntaxWarning: invalid escape sequence '\d'
+  lines_video = [l for l in lines if ' Video: ' in l and re.search('\d+x\d+', l)]
+~/Projects/solarbench-llm/.venv/lib/python3.12/site-packages/moviepy/video/io/ffmpeg_reader.py:367: SyntaxWarning: invalid escape sequence '\d'
+  rotation_lines = [l for l in lines if 'rotate          :' in l and re.search('\d+$', l)]
+~/Projects/solarbench-llm/.venv/lib/python3.12/site-packages/moviepy/video/io/ffmpeg_reader.py:370: SyntaxWarning: invalid escape sequence '\d'
+  match = re.search('\d+$', rotation_line)
+Serving remote assets from the local cache under '/tmp'. Each copy is checked against the server before use; delete the directory to force a full re-download.
+[2026-11-26 22:22:45.175] [CoACD] [info] threshold               0.05
+[2026-11-26 22:22:45.175] [CoACD] [info] max # convex hull       64
+[2026-11-26 22:22:45.175] [CoACD] [info] preprocess mode         auto
+[2026-11-26 22:22:45.175] [CoACD] [info] preprocess resolution   50
+[2026-11-26 22:22:45.175] [CoACD] [info] pca                     false
+[2026-11-26 22:22:45.175] [CoACD] [info] mcts max depth          1
+[2026-11-26 22:22:45.175] [CoACD] [info] mcts nodes              20
+[2026-11-26 22:22:45.175] [CoACD] [info] mcts iterations         5
+[2026-11-26 22:22:45.175] [CoACD] [info] merge                   false
+[2026-11-26 22:22:45.175] [CoACD] [info] decimate                false
+[2026-11-26 22:22:45.175] [CoACD] [info] max_ch_vertex           256
+[2026-11-26 22:22:45.175] [CoACD] [info] extrude                 false
+[2026-11-26 22:22:45.175] [CoACD] [info] extrude margin          0.01
+[2026-11-26 22:22:45.175] [CoACD] [info] approximate mode        ch
+[2026-11-26 22:22:45.175] [CoACD] [info] seed                    0
+[2026-11-26 22:22:45.175] [CoACD] [info]  - Manifold Check
+[2026-11-26 22:22:45.176] [CoACD] [info] [1/3] Edge check finish
+[2026-11-26 22:22:45.181] [CoACD] [info] [2/3] Self-intersection check finish
+[2026-11-26 22:22:45.181] [CoACD] [info] [3/3] Triangle orientation check finish. Reversed: false
+[2026-11-26 22:22:45.181] [CoACD] [info] Manifold Check Time: 0.006013s
+[2026-11-26 22:22:45.181] [CoACD] [info] Mesh Manifoldness: true
+[2026-11-26 22:22:45.181] [CoACD] [info] # Points: 854
+[2026-11-26 22:22:45.181] [CoACD] [info] # Triangles: 1704
+[2026-11-26 22:22:45.181] [CoACD] [info]  - Decomposition (MCTS)
+[2026-11-26 22:22:45.181] [CoACD] [info] iter 0 ---- waiting pool: 1
+[2026-11-26 22:22:45.181] [CoACD] [info] Processing [0.0%]
+[2026-11-26 22:22:45.259] [CoACD] [info] Processing [100.0%]
+[2026-11-26 22:22:45.259] [CoACD] [info] Compute Time: 0.07817476000127499s
+[2026-11-26 22:22:45.259] [CoACD] [info] # Convex Hulls: 1
+[2026-11-26 22:22:45.261] [CoACD] [info] threshold               0.05
+[2026-11-26 22:22:45.261] [CoACD] [info] max # convex hull       64
+[2026-11-26 22:22:45.261] [CoACD] [info] preprocess mode         auto
+[2026-11-26 22:22:45.261] [CoACD] [info] preprocess resolution   50
+[2026-11-26 22:22:45.261] [CoACD] [info] pca                     false
+[2026-11-26 22:22:45.261] [CoACD] [info] mcts max depth          1
+[2026-11-26 22:22:45.261] [CoACD] [info] mcts nodes              20
+[2026-11-26 22:22:45.261] [CoACD] [info] mcts iterations         5
+[2026-11-26 22:22:45.261] [CoACD] [info] merge                   false
+[2026-11-26 22:22:45.261] [CoACD] [info] decimate                false
+[2026-11-26 22:22:45.261] [CoACD] [info] max_ch_vertex           256
+[2026-11-26 22:22:45.261] [CoACD] [info] extrude                 false
+[2026-11-26 22:22:45.261] [CoACD] [info] extrude margin          0.01
+[2026-11-26 22:22:45.261] [CoACD] [info] approximate mode        ch
+[2026-11-26 22:22:45.261] [CoACD] [info] seed                    0
+[2026-11-26 22:22:45.261] [CoACD] [info]  - Manifold Check
+[2026-11-26 22:22:45.263] [CoACD] [info] [1/3] Edge check finish
+[2026-11-26 22:22:45.314] [CoACD] [info] [2/3] Self-intersection check finish
+[2026-11-26 22:22:45.314] [CoACD] [info] [3/3] Triangle orientation check finish. Reversed: false
+[2026-11-26 22:22:45.314] [CoACD] [info] Manifold Check Time: 0.077828s
+[2026-11-26 22:22:45.314] [CoACD] [info] Mesh Manifoldness: true
+[2026-11-26 22:22:45.314] [CoACD] [info] # Points: 1371
+[2026-11-26 22:22:45.314] [CoACD] [info] # Triangles: 2738
+[2026-11-26 22:22:45.314] [CoACD] [info]  - Decomposition (MCTS)
+[2026-11-26 22:22:45.314] [CoACD] [info] iter 0 ---- waiting pool: 1
+[2026-11-26 22:22:45.314] [CoACD] [info] Processing [0.0%]
+[2026-11-26 22:22:45.338] [CoACD] [info] Processing [100.0%]
+[2026-11-26 22:22:45.338] [CoACD] [info] Compute Time: 0.023637399997824105s
+[2026-11-26 22:22:45.338] [CoACD] [info] # Convex Hulls: 1
+[2026-11-26 22:22:45.339] [CoACD] [info] threshold               0.05
+[2026-11-26 22:22:45.340] [CoACD] [info] max # convex hull       64
+[2026-11-26 22:22:45.340] [CoACD] [info] preprocess mode         auto
+[2026-11-26 22:22:45.340] [CoACD] [info] preprocess resolution   50
+[2026-11-26 22:22:45.340] [CoACD] [info] pca                     false
+[2026-11-26 22:22:45.340] [CoACD] [info] mcts max depth          1
+[2026-11-26 22:22:45.340] [CoACD] [info] mcts nodes              20
+[2026-11-26 22:22:45.340] [CoACD] [info] mcts iterations         5
+[2026-11-26 22:22:45.340] [CoACD] [info] merge                   false
+[2026-11-26 22:22:45.340] [CoACD] [info] decimate                false
+[2026-11-26 22:22:45.340] [CoACD] [info] max_ch_vertex           256
+[2026-11-26 22:22:45.340] [CoACD] [info] extrude                 false
+[2026-11-26 22:22:45.340] [CoACD] [info] extrude margin          0.01
+[2026-11-26 22:22:45.340] [CoACD] [info] approximate mode        ch
+[2026-11-26 22:22:45.340] [CoACD] [info] seed                    0
+[2026-11-26 22:22:45.340] [CoACD] [info]  - Manifold Check
+[2026-11-26 22:22:45.341] [CoACD] [info] [1/3] Edge check finish
+[2026-11-26 22:22:45.347] [CoACD] [info] [2/3] Self-intersection check finish
+[2026-11-26 22:22:45.347] [CoACD] [info] [3/3] Triangle orientation check finish. Reversed: false
+[2026-11-26 22:22:45.347] [CoACD] [info] Manifold Check Time: 0.028911s
+[2026-11-26 22:22:45.347] [CoACD] [info] Mesh Manifoldness: true
+[2026-11-26 22:22:45.347] [CoACD] [info] # Points: 997
+[2026-11-26 22:22:45.347] [CoACD] [info] # Triangles: 1990
+[2026-11-26 22:22:45.347] [CoACD] [info]  - Decomposition (MCTS)
+[2026-11-26 22:22:45.347] [CoACD] [info] iter 0 ---- waiting pool: 1
+[2026-11-26 22:22:45.348] [CoACD] [info] Processing [0.0%]
+[2026-11-26 22:22:45.368] [CoACD] [info] Processing [100.0%]
+[2026-11-26 22:22:45.368] [CoACD] [info] Compute Time: 0.020778193000296596s
+[2026-11-26 22:22:45.368] [CoACD] [info] # Convex Hulls: 1
+[2026-11-26 22:22:45.369] [CoACD] [info] threshold               0.05
+[2026-11-26 22:22:45.369] [CoACD] [info] max # convex hull       64
+[2026-11-26 22:22:45.369] [CoACD] [info] preprocess mode         auto
+[2026-11-26 22:22:45.369] [CoACD] [info] preprocess resolution   50
+[2026-11-26 22:22:45.369] [CoACD] [info] pca                     false
+[2026-11-26 22:22:45.369] [CoACD] [info] mcts max depth          1
+[2026-11-26 22:22:45.369] [CoACD] [info] mcts nodes              20
+[2026-11-26 22:22:45.369] [CoACD] [info] mcts iterations         5
+[2026-11-26 22:22:45.369] [CoACD] [info] merge                   false
+[2026-11-26 22:22:45.369] [CoACD] [info] decimate                false
+[2026-11-26 22:22:45.369] [CoACD] [info] max_ch_vertex           256
+[2026-11-26 22:22:45.369] [CoACD] [info] extrude                 false
+[2026-11-26 22:22:45.369] [CoACD] [info] extrude margin          0.01
+[2026-11-26 22:22:45.369] [CoACD] [info] approximate mode        ch
+[2026-11-26 22:22:45.369] [CoACD] [info] seed                    0
+[2026-11-26 22:22:45.369] [CoACD] [info]  - Manifold Check
+[2026-11-26 22:22:45.370] [CoACD] [info] [1/3] Edge check finish
+[2026-11-26 22:22:45.374] [CoACD] [info] [2/3] Self-intersection check finish
+[2026-11-26 22:22:45.374] [CoACD] [info] [3/3] Triangle orientation check finish. Reversed: false
+[2026-11-26 22:22:45.374] [CoACD] [info] Manifold Check Time: 0.032378s
+[2026-11-26 22:22:45.374] [CoACD] [info] Mesh Manifoldness: true
+[2026-11-26 22:22:45.374] [CoACD] [info] # Points: 671
+[2026-11-26 22:22:45.374] [CoACD] [info] # Triangles: 1338
+[2026-11-26 22:22:45.374] [CoACD] [info]  - Decomposition (MCTS)
+[2026-11-26 22:22:45.374] [CoACD] [info] iter 0 ---- waiting pool: 1
+[2026-11-26 22:22:45.374] [CoACD] [info] Processing [0.0%]
+[2026-11-26 22:22:45.440] [CoACD] [info] Processing [100.0%]
+[2026-11-26 22:22:45.440] [CoACD] [info] Compute Time: 0.06619988600141369s
+[2026-11-26 22:22:45.440] [CoACD] [info] # Convex Hulls: 1
+[2026-11-26 22:22:45.442] [CoACD] [info] threshold               0.05
+[2026-11-26 22:22:45.442] [CoACD] [info] max # convex hull       64
+[2026-11-26 22:22:45.442] [CoACD] [info] preprocess mode         auto
+[2026-11-26 22:22:45.442] [CoACD] [info] preprocess resolution   50
+[2026-11-26 22:22:45.442] [CoACD] [info] pca                     false
+[2026-11-26 22:22:45.442] [CoACD] [info] mcts max depth          1
+[2026-11-26 22:22:45.442] [CoACD] [info] mcts nodes              20
+[2026-11-26 22:22:45.442] [CoACD] [info] mcts iterations         5
+[2026-11-26 22:22:45.442] [CoACD] [info] merge                   false
+[2026-11-26 22:22:45.442] [CoACD] [info] decimate                false
+[2026-11-26 22:22:45.442] [CoACD] [info] max_ch_vertex           256
+[2026-11-26 22:22:45.442] [CoACD] [info] extrude                 false
+[2026-11-26 22:22:45.442] [CoACD] [info] extrude margin          0.01
+[2026-11-26 22:22:45.442] [CoACD] [info] approximate mode        ch
+[2026-11-26 22:22:45.442] [CoACD] [info] seed                    0
+[2026-11-26 22:22:45.442] [CoACD] [info]  - Manifold Check
+[2026-11-26 22:22:45.443] [CoACD] [info] [1/3] Edge check finish
+[2026-11-26 22:22:45.447] [CoACD] [info] [2/3] Self-intersection check finish
+[2026-11-26 22:22:45.447] [CoACD] [info] [3/3] Triangle orientation check finish. Reversed: false
+[2026-11-26 22:22:45.447] [CoACD] [info] Manifold Check Time: 0.030855s
+[2026-11-26 22:22:45.447] [CoACD] [info] Mesh Manifoldness: true
+[2026-11-26 22:22:45.447] [CoACD] [info] # Points: 893
+[2026-11-26 22:22:45.447] [CoACD] [info] # Triangles: 1782
+[2026-11-26 22:22:45.447] [CoACD] [info]  - Decomposition (MCTS)
+[2026-11-26 22:22:45.447] [CoACD] [info] iter 0 ---- waiting pool: 1
+[2026-11-26 22:22:45.447] [CoACD] [info] Processing [0.0%]
+[2026-11-26 22:22:45.510] [CoACD] [info] Processing [100.0%]
+[2026-11-26 22:22:45.510] [CoACD] [info] Compute Time: 0.06299596999815549s
+[2026-11-26 22:22:45.510] [CoACD] [info] # Convex Hulls: 1
+[2026-11-26 22:22:45.511] [CoACD] [info] threshold               0.05
+[2026-11-26 22:22:45.511] [CoACD] [info] max # convex hull       64
+[2026-11-26 22:22:45.511] [CoACD] [info] preprocess mode         auto
+[2026-11-26 22:22:45.511] [CoACD] [info] preprocess resolution   50
+[2026-11-26 22:22:45.511] [CoACD] [info] pca                     false
+[2026-11-26 22:22:45.511] [CoACD] [info] mcts max depth          1
+[2026-11-26 22:22:45.511] [CoACD] [info] mcts nodes              20
+[2026-11-26 22:22:45.511] [CoACD] [info] mcts iterations         5
+[2026-11-26 22:22:45.511] [CoACD] [info] merge                   false
+[2026-11-26 22:22:45.511] [CoACD] [info] decimate                false
+[2026-11-26 22:22:45.511] [CoACD] [info] max_ch_vertex           256
+[2026-11-26 22:22:45.511] [CoACD] [info] extrude                 false
+[2026-11-26 22:22:45.511] [CoACD] [info] extrude margin          0.01
+[2026-11-26 22:22:45.511] [CoACD] [info] approximate mode        ch
+[2026-11-26 22:22:45.511] [CoACD] [info] seed                    0
+[2026-11-26 22:22:45.511] [CoACD] [info]  - Manifold Check
+[2026-11-26 22:22:45.511] [CoACD] [info] [1/3] Edge check finish
+[2026-11-26 22:22:45.511] [CoACD] [info] [2/3] Self-intersection check finish
+[2026-11-26 22:22:45.511] [CoACD] [info] [3/3] Triangle orientation check finish. Reversed: false
+[2026-11-26 22:22:45.511] [CoACD] [info] Manifold Check Time: 0.000262s
+[2026-11-26 22:22:45.511] [CoACD] [info] Mesh Manifoldness: true
+[2026-11-26 22:22:45.511] [CoACD] [info] # Points: 71
+[2026-11-26 22:22:45.511] [CoACD] [info] # Triangles: 138
+[2026-11-26 22:22:45.511] [CoACD] [info]  - Decomposition (MCTS)
+[2026-11-26 22:22:45.511] [CoACD] [info] iter 0 ---- waiting pool: 1
+[2026-11-26 22:22:45.511] [CoACD] [info] Processing [0.0%]
+[2026-11-26 22:22:45.555] [CoACD] [info] Processing [100.0%]
+[2026-11-26 22:22:45.555] [CoACD] [info] Compute Time: 0.04388407200167421s
+[2026-11-26 22:22:45.555] [CoACD] [info] # Convex Hulls: 1
+[2026-11-26 22:22:45.555] [CoACD] [info] threshold               0.05
+[2026-11-26 22:22:45.555] [CoACD] [info] max # convex hull       64
+[2026-11-26 22:22:45.555] [CoACD] [info] preprocess mode         auto
+[2026-11-26 22:22:45.555] [CoACD] [info] preprocess resolution   50
+[2026-11-26 22:22:45.555] [CoACD] [info] pca                     false
+[2026-11-26 22:22:45.555] [CoACD] [info] mcts max depth          1
+[2026-11-26 22:22:45.555] [CoACD] [info] mcts nodes              20
+[2026-11-26 22:22:45.555] [CoACD] [info] mcts iterations         5
+[2026-11-26 22:22:45.555] [CoACD] [info] merge                   false
+[2026-11-26 22:22:45.555] [CoACD] [info] decimate                false
+[2026-11-26 22:22:45.555] [CoACD] [info] max_ch_vertex           256
+[2026-11-26 22:22:45.555] [CoACD] [info] extrude                 false
+[2026-11-26 22:22:45.555] [CoACD] [info] extrude margin          0.01
+[2026-11-26 22:22:45.555] [CoACD] [info] approximate mode        ch
+[2026-11-26 22:22:45.555] [CoACD] [info] seed                    0
+[2026-11-26 22:22:45.555] [CoACD] [info]  - Manifold Check
+[2026-11-26 22:22:45.556] [CoACD] [info] [1/3] Edge check finish
+[2026-11-26 22:22:45.557] [CoACD] [info] [2/3] Self-intersection check finish
+[2026-11-26 22:22:45.557] [CoACD] [info] [3/3] Triangle orientation check finish. Reversed: false
+[2026-11-26 22:22:45.557] [CoACD] [info] Manifold Check Time: 0.015876s
+[2026-11-26 22:22:45.557] [CoACD] [info] Mesh Manifoldness: true
+[2026-11-26 22:22:45.557] [CoACD] [info] # Points: 231
+[2026-11-26 22:22:45.557] [CoACD] [info] # Triangles: 458
+[2026-11-26 22:22:45.557] [CoACD] [info]  - Decomposition (MCTS)
+[2026-11-26 22:22:45.557] [CoACD] [info] iter 0 ---- waiting pool: 1
+[2026-11-26 22:22:45.557] [CoACD] [info] Processing [0.0%]
+[2026-11-26 22:22:45.609] [CoACD] [info] Processing [100.0%]
+[2026-11-26 22:22:45.609] [CoACD] [info] Compute Time: 0.05150103900086833s
+[2026-11-26 22:22:45.609] [CoACD] [info] # Convex Hulls: 1
+Failed to get root com velocity. If the articulation is fixed, this is expected. Setting root com velocity to zeros.
+Failed to get root com velocity. If the articulation is fixed, this is expected. Setting root com velocity to zeros.
+[INFO]: Parsing configuration from: solarbench.tasks.clamp_env_cfg:ClampEnvCfg
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 0
+	Physics step-size     : 0.0016666666666666668
+	Rendering step-size   : 0.03333333333333333
+	Environment step-size : 0.03333333333333333
+[INFO]: Time taken for scene creation Last: 1.305021 s, Mean: 1.305021 s, Std: 0.000000 s, N: 1
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 4
+	Environment spacing   : 8.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : []
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+Finalize builder took: Last: 0.115182 s, Mean: 0.115182 s, Std: 0.000000 s, N: 1
+Initialize solver took: Last: 1.000762 s, Mean: 1.000762 s, Std: 0.000000 s, N: 1
+[INFO]: Time taken for simulation start Last: 1.282116 s, Mean: 1.282116 s, Std: 0.000000 s, N: 1
+[INFO]: Completed setting up the environment...
+CUDA graph took: Last: 0.388941 s, Mean: 0.388941 s, Std: 0.000000 s, N: 1
+
+== SolarBench-T3-ClampTighten-UR16e-v0 | oracle | dev | newton | 8/8 valid
+  stage_engaged          100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  stage_snug             100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  stage_in_spec          100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  stage_released         100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  success                100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  safe_success           100.0%  95% CI [67.6%, 100.0%]  (8/8)
+  damage                   0.0%  95% CI [0.0%, 32.4%]  (0/8)
+  sim_error_rate         0.0%
+  wrote NOTES/runs/SolarBench-T3-ClampTighten-UR16e-v0/oracle_dev_newton.json
+wall 449s  gpu MiB: start 2031 peak 2221  RAM used MiB: start 6446 peak 7582
