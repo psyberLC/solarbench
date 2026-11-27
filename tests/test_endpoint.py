@@ -206,3 +206,40 @@ def test_the_address_comes_from_the_name_or_the_environment(server, monkeypatch)
         make_policy("endpoint:m", CATALOGUE, None)
     with pytest.raises(ValueError, match="got 'm,colour=red'"):
         make_policy("endpoint:m,colour=red", CATALOGUE, None)
+
+
+@pytest.mark.unit
+def test_assisted_commands_become_poses_from_the_tool_pose_now():
+    from solarbench.agents.endpoint import _axis
+
+    here = (np.array([0.4, 0.0, 0.5]), np.array([0.0, 0.0, 0.0, 1.0]))  # socket pointing up (+z)
+    opcode, args = parse('{"aim": [0.42, 0.015, 0.44], "socket_toward": [0, -0.342, -0.94]}', here)
+    assert opcode == wire.TOOL_POSE and args[:3] == [0.42, 0.015, 0.44]
+    assert np.allclose(_axis(args[3:], 2), np.array([0, -0.342, -0.94]) / np.hypot(0.342, 0.94), atol=1e-6)
+    _, args = parse('{"aim": [0, 0, 0], "socket_toward": [0, 0, -2]}', here)  # straight back: half a turn about x
+    assert np.allclose(np.abs(args[3:]), [1, 0, 0, 0], atol=1e-6)
+    _, args = parse('{"push_mm": -10}', here)
+    assert np.allclose(args, [0.4, 0.0, 0.49, 0, 0, 0, 1])
+    _, args = parse('{"turn_deg": 400}', here)  # cut to 90 degrees about tool z
+    assert np.allclose(args[3:], [0, 0, np.sqrt(0.5), np.sqrt(0.5)])
+    assert parse('{"push_mm": "far"}', here) is None and parse('{"turn_deg": 30}') is None  # needs the pose
+
+
+@pytest.mark.unit
+def test_with_assisted_commands_the_model_is_told_where_the_socket_points(server):
+    seen, replies, _ = server
+    catalogue = json.loads(json.dumps(CATALOGUE))
+    catalogue["channels"][1] = {"id": 2, "name": "proprio", "dtype": "f4", "shape": [7], "fields": [
+        {"name": "tool_pos", "start": 0, "count": 3, "unit": "m"}, {"name": "tool_quat", "start": 3, "count": 4,
+                                                                    "unit": "xyzw"}]}
+    policy, layout = make_policy("endpoint:m,commands=assist", catalogue, None)
+    assert policy.name.endswith("-assist") and policy.settings["commands"] == "assist"
+    policy.reset(torch.arange(1), ["work order"])
+    obs = {"clock": torch.tensor([[0, wire.FIRST | wire.AWAKE]], dtype=torch.int32),
+           "proprio": torch.tensor([[0.4, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0]]),
+           "completions": torch.zeros(1, 2, 8, dtype=torch.int32)}
+    replies.append('{"push_mm": 5}')
+    records = policy.act(obs).numpy().view(wire.COMMAND)[..., 0]
+    assert "socket points along (tool z, base frame): 0.0000, 0.0000, 1.0000" in seen[-1]["messages"][-1]["content"]
+    assert '"push_mm"' in seen[-1]["messages"][0]["content"]
+    assert records["opcode"][0, 0] == wire.TOOL_POSE and np.allclose(records["args"][0, 0, :3], [0.4, 0.0, 0.505])

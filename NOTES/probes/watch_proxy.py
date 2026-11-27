@@ -79,7 +79,8 @@ def stream(request: dict, headers: dict) -> tuple[int, dict]:
                 if not line.startswith("data: ") or line == "data: [DONE]":
                     continue
                 chunk = json.loads(line[6:])
-                model, usage, timings = chunk.get("model", model), chunk.get("usage") or usage, chunk.get("timings") or timings
+                model, usage = chunk.get("model", model), chunk.get("usage") or usage
+                timings = chunk.get("timings") or timings
                 for choice in chunk.get("choices", []):
                     delta = choice.get("delta", {})
                     if delta.get("reasoning_content"):

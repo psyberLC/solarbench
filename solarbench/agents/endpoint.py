@@ -3,12 +3,15 @@
 Where the model runs is a URL. A local server for open weights and a remote service look the same from here.
 Settings come with the policy name, or else from the environment variable named beside each:
     --policy endpoint:<model>[,wrench=on][,reasoning=on][,temperature=0][,max_tokens=4096][,seed=0][,rounds=40]
-                             [,log=<file.jsonl>][,url=<base url>]
+                             [,log=<file.jsonl>][,url=<base url>][,commands=pose]
     SOLARBENCH_ENDPOINT_URL        the server's base address, ending in /v1 (or url=)
     SOLARBENCH_ENDPOINT_LOG        a JSON-lines file that gets one line per call (or log=)
     SOLARBENCH_ENDPOINT_KEY        sent as a bearer token if set; never stored, logged or written to a result
 ``reasoning`` asks the server's chat template to let the model think first (``enable_thinking``), or not.
 ``rounds`` caps the calls per episode; once it is reached the robot holds until the episode ends.
+``commands=assist`` adds commands that leave the rotation arithmetic to the adapter (aim the socket along a direction,
+push along it, turn about it), each turned into one pose from the tool pose now, and tells the model where the socket
+points. The model still decides every move; the arm still moves within its own limits.
 
 What the model reads: the description of its body and how to reply (the system message), the work order, then one
 message per round with the selected channels as text. Its own earlier replies stay in the conversation, so each
@@ -48,6 +51,23 @@ Reason as you wish, then end your reply with one line of JSON and nothing after 
 or, when the job is finished or cannot be finished:
 {"done": true}
 """
+REPLY_ASSIST = """
+## Commands
+Each round you send one command. The arm moves the tool within its limits and stops when it arrives, when it can go \
+no further, or when the command's time runs out. You are then told how the command ended and what the robot senses, \
+including the direction the socket points, and asked for the next command. The commands:
+- {"aim": [x, y, z], "socket_toward": [dx, dy, dz]}: put the centre of the socket's open face at the point (x, y, z), \
+with the open face pointing along (dx, dy, dz), both in the base frame. The direction is where tool z points; it need \
+not be a unit vector. The tool turns as little as it can to get there.
+- {"push_mm": d}: move the tool d mm straight along the way the socket points, keeping its orientation. A negative d \
+moves it back.
+- {"turn_deg": a}: turn the tool a degrees about its own z axis, keeping its position. A positive a turns clockwise as \
+seen from behind the tool, which tightens a right-hand thread. At most 90 degrees per command; more is cut to 90.
+- {"position": [x, y, z], "quaternion": [x, y, z, w]}: a pose for the tool frame in the base frame.
+- {"done": true}: the job is finished or cannot be finished.
+
+Reason as you wish, then end your reply with one command, as one line of JSON, and nothing after it.
+"""
 AGAIN = 'That reply did not end with a command that could be read. Send only the line of JSON.'
 UNREAD = "Your last reply did not end with a command that could be read.\n"
 ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED_OUT: "ran out of time",
@@ -55,7 +75,7 @@ ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED
          wire.INVALID: "was refused: invalid argument", wire.FULL: "was refused: queue full"}
 ENCODING = "text, 4 decimals"
 OPTIONS = {"wrench": "off", "reasoning": "on", "temperature": "0", "max_tokens": "4096", "seed": "0", "rounds": "40",
-           "log": "", "url": ""}
+           "log": "", "url": "", "commands": "pose"}
 _DECODER = json.JSONDecoder()
 
 
@@ -71,18 +91,77 @@ def _last_object(reply: str):
     return None
 
 
-def parse(reply: str) -> tuple[int, list[float]] | None:
-    """The opcode and arguments of the command that ends a reply, or ``None`` if it does not end with one."""
+def _number(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def _qmul(a, b) -> np.ndarray:
+    ax, ay, az, aw = a
+    bx, by, bz, bw = b
+    return np.array([aw * bx + ax * bw + ay * bz - az * by, aw * by - ax * bz + ay * bw + az * bx,
+                     aw * bz + ax * by - ay * bx + az * bw, aw * bw - ax * bx - ay * by - az * bz])
+
+
+def _axis(q, k: int) -> np.ndarray:
+    """Where tool axis ``k`` (0 x, 1 y, 2 z) points in the base frame, for a tool orientation ``q`` (xyzw)."""
+    x, y, z, w = q
+    return np.array([(1 - 2 * (y * y + z * z), 2 * (x * y + w * z), 2 * (x * z - w * y)),
+                     (2 * (x * y - w * z), 1 - 2 * (x * x + z * z), 2 * (y * z + w * x)),
+                     (2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y))][k])
+
+
+def _assisted(data: dict, position: np.ndarray, quaternion: np.ndarray):
+    """An aim, push or turn command as a target pose, from the tool pose now; ``None`` if it is none of those."""
+    if "aim" in data or "socket_toward" in data:
+        point, toward = data.get("aim"), data.get("socket_toward")
+        if not all(isinstance(v, list) and len(v) == 3 and all(map(_number, v)) for v in (point, toward)):
+            return None
+        v, u = np.array(toward, float), _axis(quaternion, 2)
+        if np.linalg.norm(v) < 1e-6:
+            return None
+        v /= np.linalg.norm(v)
+        if u @ v < -0.9999:  # straight back: half a turn about tool x
+            delta = np.array([*_axis(quaternion, 0), 0.0])
+        else:  # the shortest rotation that takes tool z onto v
+            delta = np.array([*np.cross(u, v), 1 + u @ v])
+            delta /= np.linalg.norm(delta)
+        return np.array(point, float), _qmul(delta, quaternion)
+    if "push_mm" in data:
+        if not _number(data["push_mm"]):
+            return None
+        return position + data["push_mm"] / 1000 * _axis(quaternion, 2), quaternion
+    if "turn_deg" in data:
+        if not _number(data["turn_deg"]):
+            return None
+        half = math.radians(max(-90.0, min(90.0, data["turn_deg"]))) / 2
+        return position, _qmul(quaternion, np.array([0.0, 0.0, math.sin(half), math.cos(half)]))
+    return None
+
+
+def _tool_pose(catalogue: dict, frame: dict[str, np.ndarray], env: int) -> tuple[np.ndarray, np.ndarray]:
+    """The measured tool position and orientation (unit quaternion) of one environment."""
+    fields = {f["name"]: f for c in catalogue["channels"] if c["name"] == "proprio" for f in c.get("fields", ())}
+    row = frame["proprio"][env]
+    p, q = fields["tool_pos"]["start"], fields["tool_quat"]["start"]
+    quat = np.array(row[q : q + 4], float)
+    return np.array(row[p : p + 3], float), quat / np.linalg.norm(quat)
+
+
+def parse(reply: str, pose: tuple[np.ndarray, np.ndarray] | None = None) -> tuple[int, list[float]] | None:
+    """The opcode and arguments of the command that ends a reply, or ``None`` if it does not end with one.
+    Given the tool ``pose`` now, aim, push and turn commands are read too (``commands=assist``)."""
     data = _last_object(reply)
     if not isinstance(data, dict):
         return None
     if data.get("done") is True:
         return wire.DONE, []
     position, quaternion = data.get("position"), data.get("quaternion")
+    if pose is not None and (target := _assisted(data, *pose)) is not None:
+        position, quaternion = [float(x) for x in target[0]], [float(x) for x in target[1]]
     if not (isinstance(position, list) and isinstance(quaternion, list) and (len(position), len(quaternion)) == (3, 4)):
         return None
     numbers = [*position, *quaternion]
-    if not all(isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) for x in numbers):
+    if not all(map(_number, numbers)):
         return None
     norm = math.sqrt(sum(x * x for x in quaternion))
     if norm < 1e-6:
@@ -90,8 +169,10 @@ def parse(reply: str) -> tuple[int, list[float]] | None:
     return wire.TOOL_POSE, [*map(float, position), *(x / norm for x in quaternion)]
 
 
-def describe(catalogue: dict, layout: wire.Layout, frame: dict[str, np.ndarray], env: int, sent: int | None) -> str:
-    """One environment's frame as text: the tick, how the last command ended, then each field of each channel."""
+def describe(catalogue: dict, layout: wire.Layout, frame: dict[str, np.ndarray], env: int, sent: int | None,
+             pose: tuple[np.ndarray, np.ndarray] | None = None) -> str:
+    """One environment's frame as text: the tick, how the last command ended, then each field of each channel, and,
+    given the tool ``pose``, the direction the socket points."""
     lines = [f"tick {int(frame['clock'][env]['tick'])}"]
     for record in frame["completions"][env][::-1] if "completions" in frame else ():
         if sent is not None and record["id"] == sent and record["opcode"] == wire.TOOL_POSE:
@@ -106,6 +187,8 @@ def describe(catalogue: dict, layout: wire.Layout, frame: dict[str, np.ndarray],
         for field in by_name[name].get("fields", ()):
             values = frame[name][env][field["start"] : field["start"] + field["count"]]
             lines.append(f"{field['name']} [{field['unit']}]: " + ", ".join(f"{value:.4f}" for value in values))
+    if pose is not None:
+        lines.append("socket points along (tool z, base frame): " + ", ".join(f"{v:.4f}" for v in _axis(pose[1], 2)))
     return "\n".join(lines)
 
 
@@ -121,19 +204,22 @@ class EndpointPolicy:
         self._url = options["url"].rstrip("/") + "/chat/completions"
         self._log, self._log_lock = options["log"], threading.Lock()
         wrench, reasoning = options["wrench"] == "on", options["reasoning"] == "on"
+        if options["commands"] not in ("pose", "assist"):
+            raise ValueError(f"commands=pose or commands=assist, got {options['commands']!r}")
+        self._assist = options["commands"] == "assist"
         offered = {channel["name"] for channel in catalogue["channels"]}
         wanted = ["proprio", *(["wrench"] if wrench else []), *(["completions"] if "completions" in offered else [])]
         self.selection = {**select(catalogue, *wanted), "depth": 1, "wake": "idle"}
         self.name = ("endpoint-" + re.sub(r"[^A-Za-z0-9.]+", "-", model) + ("-force" if wrench else "-noforce")
-                     + ("" if reasoning else "-noreasoning"))
+                     + ("" if reasoning else "-noreasoning") + ("-assist" if self._assist else ""))
         local = urlparse(self._url).hostname in ("localhost", "127.0.0.1", "::1")
         # what a result has to say about the model (docs/interface.md, section 10): not the address, not the key
         self.settings = {"model": model, "endpoint": "local" if local else "remote", "encoding": ENCODING,
                          "reasoning": reasoning, "temperature": float(options["temperature"]),
                          "max_tokens": int(options["max_tokens"]), "seed": int(options["seed"]),
-                         "rounds": int(options["rounds"])}
+                         "rounds": int(options["rounds"]), "commands": options["commands"]}
         self._catalogue, self._layout = catalogue, wire.Layout(catalogue, self.selection)
-        self._system = prompts.body(catalogue["task"], wrench) + REPLY
+        self._system = prompts.body(catalogue["task"], wrench) + (REPLY_ASSIST if self._assist else REPLY)
         self._messages: dict[int, list[dict]] = {}
         self._sent: dict[int, int | None] = {}  # id of the last command each environment sent
         self._episode: dict[int, int] = {}  # how many episodes each environment has started
@@ -172,7 +258,7 @@ class EndpointPolicy:
                 time.sleep(30)
         raise AssertionError("unreachable")
 
-    def _ask(self, env: int, text: str, tick: int) -> tuple[int, list[float]] | None:
+    def _ask(self, env: int, text: str, tick: int, pose=None) -> tuple[int, list[float]] | None:
         messages = self._messages[env]
         messages.append({"role": "user", "content": text})
         command = None
@@ -183,7 +269,7 @@ class EndpointPolicy:
             message = choice["message"]
             reply, thought = message.get("content") or "", message.get("reasoning_content") or ""
             messages.append({"role": "assistant", "content": reply})
-            command, usage = parse(reply), answer.get("usage", {})
+            command, usage = parse(reply, pose), answer.get("usage", {})
             call = {"wall_s": time.perf_counter() - started, "tokens_read": usage.get("prompt_tokens"),
                     "tokens_written": usage.get("completion_tokens"),
                     "tokens_cached": (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
@@ -217,13 +303,13 @@ class EndpointPolicy:
                  and sum(not call["retry"] for call in self.calls[env]) < rounds]
         if not awake:
             return None
-        texts = []
-        for env in awake:
-            text = describe(self._catalogue, self._layout, frame, env, self._sent[env])
+        texts, poses = [], [_tool_pose(self._catalogue, frame, env) if self._assist else None for env in awake]
+        for env, pose in zip(awake, poses, strict=True):
+            text = describe(self._catalogue, self._layout, frame, env, self._sent[env], pose)
             texts.append(UNREAD + text if env in self._unread else text)
         ticks = [int(clock[env]["tick"]) for env in awake]
         self._pool = self._pool or ThreadPoolExecutor(max_workers=len(clock))
-        for env, command in zip(awake, self._pool.map(self._ask, awake, texts, ticks), strict=True):
+        for env, command in zip(awake, self._pool.map(self._ask, awake, texts, ticks, poses), strict=True):
             if command is None:
                 self._unread.add(env)
                 continue
