@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# First login on RTU's RUDENS cluster: print what NOTES/HPC_PLAN.md needs to know. Read-only: it changes nothing.
-# Run it on the login node (ssh <user>@ui-2.hpc.rtu.lv), and again inside an interactive job on a GPU node.
-#   bash NOTES/hpc/discover.sh 2>&1 | tee discover-$(hostname).txt
+# First login on RTU's RUDENS cluster: print what NOTES/HPC_PLAN.md needs to serve a model there (the laptop keeps
+# the simulation). Read-only: it changes nothing. Copy it across and run it on the login node
+# (ssh <user>@ui-2.hpc.rtu.lv), then again inside an interactive job on a GPU node.
+#   bash discover.sh 2>&1 | tee discover-$(hostname).txt
 set -u
 echo "== host"; hostname; uname -r; ldd --version 2>&1 | head -1
 echo "== scheduler"
@@ -31,5 +32,7 @@ for u in https://huggingface.co https://pypi.org https://github.com https://regi
     printf "%s: " "$u"; curl -sI --max-time 8 -o /dev/null -w "%{http_code}\n" "$u" || echo unreachable
 done
 env | grep -i "_proxy" || echo "no proxy variables set"
-echo "== python"
-python3 --version 2>&1; command -v uv > /dev/null && uv --version || echo "uv not installed"
+echo "== network: can this node reach the login node's SSH port, and is anything already on port 8000"
+(timeout 3 bash -c "echo > /dev/tcp/ui-2.hpc.rtu.lv/22" 2> /dev/null && echo "ui-2.hpc.rtu.lv:22 reachable") \
+    || echo "ui-2.hpc.rtu.lv:22 not reachable from here"
+command -v ss > /dev/null && (ss -ltn | grep -q ":8000 " && echo "port 8000 in use" || echo "port 8000 free")

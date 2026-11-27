@@ -4,7 +4,7 @@ Where the model runs is a URL. A local server for open weights and a remote serv
 Settings come with the policy name, or else from the environment variable named beside each:
     --policy endpoint:<model>[,wrench=on][,reasoning=on][,temperature=0][,max_tokens=4096][,seed=0][,rounds=40]
                              [,log=<file.jsonl>][,url=<base url>][,commands=pose][,privileged=off][,notes=<file>]
-                             [,keep_thinking=off][,tools=off]
+                             [,keep_thinking=off][,tools=off][,host=local|remote]
     SOLARBENCH_ENDPOINT_URL        the server's base address, ending in /v1 (or url=)
     SOLARBENCH_ENDPOINT_LOG        a JSON-lines file that gets one line per call (or log=)
     SOLARBENCH_ENDPOINT_KEY        sent as a bearer token if set; never stored, logged or written to a result
@@ -21,6 +21,8 @@ earlier attempts); the result records the file's name.
 ``keep_thinking=on`` sends the model's earlier thinking back with its earlier replies and asks the chat template to
 keep it (``truncate_history_thinking`` off), so it need not work everything out again each round. The conversation
 then grows by each round's thinking: cap it with the server's thinking budget and ``rounds``.
+``host=remote`` records the model as remote when the URL is local only because of a tunnel (the default is read
+from the URL's host).
 ``tools=on`` drives the model through native tool calls instead of a line of JSON: aim, push, turn, push_and_turn,
 pose and done (the commands of ``commands=assist``, which it implies). Each call's result is the next state report,
 sent as the tool's result, so the conversation stays one tool loop and a chat template that drops thinking before
@@ -146,7 +148,7 @@ ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED
 ENCODING = "text, 4 decimals"
 OPTIONS = {"wrench": "off", "reasoning": "on", "temperature": "0", "max_tokens": "4096", "seed": "0", "rounds": "40",
            "log": "", "url": "", "commands": "pose", "privileged": "off", "notes": "", "keep_thinking": "off",
-           "tools": "off"}
+           "tools": "off", "host": ""}
 _DECODER = json.JSONDecoder()
 
 
@@ -348,7 +350,10 @@ class EndpointPolicy:
         self.name = ("endpoint-" + re.sub(r"[^A-Za-z0-9.]+", "-", model) + ("-force" if wrench else "-noforce")
                      + ("" if reasoning else "-noreasoning") + ("-assist" if self._assist else "")
                      + ("-privileged" if privileged else "") + ("-tools" if self._tools else ""))
-        local = urlparse(self._url).hostname in ("localhost", "127.0.0.1", "::1")
+        if options["host"] not in ("", "local", "remote"):
+            raise ValueError(f"host=local or host=remote, got {options['host']!r}")
+        local = (options["host"] == "local" if options["host"]
+                 else urlparse(self._url).hostname in ("localhost", "127.0.0.1", "::1"))
         # what a result has to say about the model (docs/interface.md, section 10): not the address, not the key
         self.settings = {"model": model, "endpoint": "local" if local else "remote", "encoding": ENCODING,
                          "reasoning": reasoning, "temperature": float(options["temperature"]),

@@ -332,3 +332,10 @@ def test_thinking_is_read_under_either_field_name():
     from solarbench.agents.endpoint import _thought
 
     assert _thought({"reasoning_content": "a"}) == "a" and _thought({"reasoning": "b"}) == "b" and _thought({}) == ""
+
+
+@pytest.mark.unit
+def test_a_tunnelled_endpoint_can_be_recorded_as_remote():
+    policy, _ = make_policy("endpoint:m,url=http://127.0.0.1:8000/v1,host=remote", CATALOGUE, None)
+    assert policy.settings["endpoint"] == "remote"
+    assert make_policy("endpoint:m,url=http://127.0.0.1:8000/v1", CATALOGUE, None)[0].settings["endpoint"] == "local"
