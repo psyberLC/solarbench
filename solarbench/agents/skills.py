@@ -60,14 +60,20 @@ def aligned(q, axis) -> np.ndarray:
 DESCRIPTIONS = {
     "seat": "Closed loop: keep the socket centred on the bolt's axis, press lightly and turn slowly until the hex "
             "flats line up and the socket drops onto the head (engaged), unwinding if a corner catches. Start "
-            "with the socket on the axis just off the head top. Ends when seated, or after max_s seconds.",
+            "with the socket on the axis just off the head top: first send the readings' ready 'centre it 0.5 "
+            "mm out from the head top' aim (from far away a straight move can clip the head). Ends when seated, "
+            "or after max_s seconds.",
     "tighten_to": "Closed loop: turn the seated socket in the tightening direction, keeping it pressed on and "
                   "centred, slowing near the end, and stop as soon as the wrist's drive torque reaches torque_Nm. "
-                  "Ends then, or if the socket comes off, or after max_s seconds.",
+                  "The installed torque ends within about 0.1 N·m of where it stops. The job accepts 14 to 18 N·m "
+                  "installed, so aim for the middle (about 15.5-16) to keep a margin on both sides. Ends then, "
+                  "or if the socket comes off, or after max_s seconds.",
     "unload": "Closed loop: turn back slowly, keeping the socket on, until the drive torque is near zero (under "
-              "0.1 N·m), so the socket no longer grips the flats. The bolt stays tight.",
+              "0.1 N·m), so the socket no longer grips the flats. The bolt stays tight. Do this before "
+              "retract: a socket still loaded grips the flats and the retract sticks.",
     "retract": "Closed loop: move the socket straight out along the bolt's axis until its face is mm millimetres "
-               "from the head top, keeping it centred and straight.",
+               "from the head top, keeping it centred and straight. Unload first. 50 mm or more clears the job's "
+               "30 mm condition with a margin.",
 }
 PARAMETERS = {
     "seat": {"max_s": {"type": "number", "description": "time limit in seconds (default 10)"}},
