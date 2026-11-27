@@ -270,3 +270,11 @@ def test_privileged_readings_are_read_by_name_and_give_depth_offset_and_tilt():
     assert "socket depth on the head: 4.00 mm" in text
     assert "socket axis off the bolt axis: 1.00 mm, the socket being at -1.00, +0.00, +0.00 mm" in text
     assert "socket axis tilted from the bolt axis: 0.00 deg" in text  # tool z (0, 0, -1) against the axis (0, 0, 1)
+
+
+@pytest.mark.unit
+def test_notes_are_appended_to_the_system_message(tmp_path):
+    notes = tmp_path / "lessons.md"
+    notes.write_text("## Notes\nPress lightly.\n")
+    policy, _ = make_policy(f"endpoint:m,url=http://x/v1,notes={notes}", CATALOGUE, None)
+    assert policy._system.endswith("## Notes\nPress lightly.\n") and policy.settings["notes"] == "lessons.md"

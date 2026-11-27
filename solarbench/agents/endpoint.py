@@ -3,7 +3,7 @@
 Where the model runs is a URL. A local server for open weights and a remote service look the same from here.
 Settings come with the policy name, or else from the environment variable named beside each:
     --policy endpoint:<model>[,wrench=on][,reasoning=on][,temperature=0][,max_tokens=4096][,seed=0][,rounds=40]
-                             [,log=<file.jsonl>][,url=<base url>][,commands=pose][,privileged=off]
+                             [,log=<file.jsonl>][,url=<base url>][,commands=pose][,privileged=off][,notes=<file>]
     SOLARBENCH_ENDPOINT_URL        the server's base address, ending in /v1 (or url=)
     SOLARBENCH_ENDPOINT_LOG        a JSON-lines file that gets one line per call (or log=)
     SOLARBENCH_ENDPOINT_KEY        sent as a bearer token if set; never stored, logged or written to a result
@@ -15,6 +15,8 @@ points. The model still decides every move; the arm still moves within its own l
 ``privileged=on`` also gives the model the task's privileged channel, read by its field names (where the head is from
 the tool, the bolt's axis and angle, installed and drive torque, whether the socket counts as seated), and how deep,
 how far off the axis and how tilted the socket is. The result is then marked privileged.
+``notes=<file>`` appends that text file to the system message (advice written for the model, such as lessons from
+earlier attempts); the result records the file's name.
 
 What the model reads: the description of its body and how to reply (the system message), the work order, then one
 message per round with the selected channels as text. Its own earlier replies stay in the conversation, so each
@@ -35,6 +37,7 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from urllib.parse import urlparse
 
 import numpy as np
@@ -91,7 +94,7 @@ ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED
          wire.INVALID: "was refused: invalid argument", wire.FULL: "was refused: queue full"}
 ENCODING = "text, 4 decimals"
 OPTIONS = {"wrench": "off", "reasoning": "on", "temperature": "0", "max_tokens": "4096", "seed": "0", "rounds": "40",
-           "log": "", "url": "", "commands": "pose", "privileged": "off"}
+           "log": "", "url": "", "commands": "pose", "privileged": "off", "notes": ""}
 _DECODER = json.JSONDecoder()
 
 
@@ -256,10 +259,12 @@ class EndpointPolicy:
         self.settings = {"model": model, "endpoint": "local" if local else "remote", "encoding": ENCODING,
                          "reasoning": reasoning, "temperature": float(options["temperature"]),
                          "max_tokens": int(options["max_tokens"]), "seed": int(options["seed"]),
-                         "rounds": int(options["rounds"]), "commands": options["commands"], "privileged": privileged}
+                         "rounds": int(options["rounds"]), "commands": options["commands"], "privileged": privileged,
+                         "notes": os.path.basename(options["notes"])}
         self._catalogue, self._layout = catalogue, wire.Layout(catalogue, self.selection)
-        self._system = prompts.body(catalogue["task"], wrench) + (REPLY_ASSIST if self._assist else REPLY) + (
-            PRIVILEGED if privileged else "")
+        notes = "\n" + Path(options["notes"]).read_text() if options["notes"] else ""
+        self._system = (prompts.body(catalogue["task"], wrench) + (REPLY_ASSIST if self._assist else REPLY)
+                        + (PRIVILEGED if privileged else "") + notes)
         self._messages: dict[int, list[dict]] = {}
         self._sent: dict[int, int | None] = {}  # id of the last command each environment sent
         self._episode: dict[int, int] = {}  # how many episodes each environment has started

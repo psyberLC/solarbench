@@ -1,0 +1,13 @@
+## Notes from earlier attempts at this job
+Success matters more than speed: never go above 18 N·m installed torque and never force a jammed socket. These notes come from attempts that succeeded; the bolt and the angle of its flats may differ from theirs.
+
+Direction. The socket must point INTO the bolt: socket_toward is minus bolt_axis. The head top is at tool_pos + head_top_minus_tool. A point d metres out from the head top on the axis is head + d * bolt_axis.
+
+1. Approach in two commands: aim at 0.030 m out on the axis (a long move straight to the head can clip it), then aim at 0.0005 m out.
+2. Centre. The arm settles 0.3-0.5 mm off its target, consistently the same way, and the socket only drops onto the head when it is within about 0.2 mm of the axis. When the offset is over 0.2 mm, aim again at the intended point minus the reported offset vector (it is given in mm; convert to m), and keep that correction for later aims.
+3. Find the flats. They repeat every 60 degrees and the socket drops on only within a few degrees. Turning while pressing drags the socket about 1 mm off the axis per 15 degrees, so until it is seated do not press and turn in one command. Alternate: {"turn_deg": a} alone (the press relaxes), then {"push_mm": d} with d = 1.5 + the gap if the face is short of the head. If the push arrives and the depth jumps above about 1.5 mm, the flats lined up. While blocked, the depth on the chamfer is a hint: about 0.0-0.1 mm means far from lined up, 0.2-0.6 mm means close. Step about 10 degrees when far, 3-5 when close. Re-centre (step 2) whenever the offset grows past 0.2 mm.
+4. Seat: push on to about 5 mm deep. engaged becomes 1.
+5. Run down: bolt_angle (radians, 0 at snug) says how far is left. Turn in large steps, up to 90 degrees per command; once seated you may add a light press, e.g. {"push_mm": 1.0, "turn_deg": 64}. Stop about 5 degrees short of snug.
+6. Tighten past snug: the installed torque rose about 0.57 N·m per degree of bolt turn, and the wrist lagged its command by about 0.29 degrees per N·m of torque. Take one step of about 15-20 degrees, measure the slope, then plan the remaining one or two steps to land at 15-16 N·m. Never exceed 18.
+7. Release: first a small reverse turn until drive_torque is about 0 (under 0.1 N·m). In one attempt -1.5 degrees left 0.7 N·m, which still gripped the flats and jammed the lift at 144 N; another -1 degree brought it to 0.03. Then aim at 0.050 m out on the axis, keeping socket_toward along minus bolt_axis (do not pull with push_mm, which follows the socket's own, possibly tilted, axis). Then send {"done": true}.
+8. Wrist 3 has about +-6.28 rad of travel (joint_pos, last value); make sure it leaves room for about 200-300 degrees of turning.
