@@ -83,9 +83,9 @@ def stream(request: dict, headers: dict) -> tuple[int, dict]:
                 timings = chunk.get("timings") or timings
                 for choice in chunk.get("choices", []):
                     delta = choice.get("delta", {})
-                    if delta.get("reasoning_content"):
-                        thought.append(delta["reasoning_content"])
-                        out.write(delta["reasoning_content"], "think")
+                    if piece := delta.get("reasoning_content") or delta.get("reasoning"):  # llama.cpp / vLLM
+                        thought.append(piece)
+                        out.write(piece, "think")
                     if delta.get("content"):
                         content.append(delta["content"])
                         out.write(delta["content"], "reply")
