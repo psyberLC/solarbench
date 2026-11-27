@@ -11,8 +11,8 @@
 # LESSONS (a text file appended to the system message, e.g. NOTES/probes/lessons_bolt.md), KEEP (on: earlier thinking
 # is sent back each round; serve with CTX=131072 and a small BUDGET), TEMP (sampling temperature with thinking, default 1.0),
 # TOOLS (on: native tool calls instead of a line of JSON), HOST (remote: the model runs elsewhere, e.g. through a
-# tunnel to the cluster), SKILLS (on: closed-loop seat / tighten_to / unload / retract tools; needs TOOLS and
-# PRIVILEGED).
+# tunnel to the cluster), SKILLS (on: closed-loop seat / tighten_to / unload / retract tools; needs TOOLS; works
+# without PRIVILEGED, from the wrist sensor).
 # An agent answers through NOTES/probes/agent_bridge.py on port 8082.
 set -euo pipefail
 cd "$(dirname "$0")/.."

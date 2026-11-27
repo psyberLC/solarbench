@@ -11,7 +11,7 @@ Building and maintaining solar plants is limited by skilled labour. Much of that
 
 Both clips are a hand-written controller running in simulation, with the measured values on screen. They show the tasks and how they are scored.
 
-**Status: early.** Two tasks, the connector and the bolt (in both directions), run end to end with a hand-written controller. No learned or language model has been evaluated yet; that is the experiment being built now.
+**Status: early.** Two tasks, the connector and the bolt (in both directions), run end to end with a hand-written controller. No learned or language model has been evaluated for the benchmark yet; that is the experiment being built now. This fork adds exploratory runs of language models on both tasks, which rank nothing: see [Language models on this fork](#language-models-on-this-fork-exploratory).
 
 ## The question being asked first
 Models that reason can now drive robot arms, and do well until the task is decided by contact. In those evaluations the model is given no sense of force.
@@ -40,7 +40,39 @@ Each cell is episodes that met the full specification with no damage, out of epi
 
 Also here: seven OpenUSD assets generated from datasheet values and passing SimReady validation, and an [atlas](atlas/README.md) of 107 maintenance tasks coded by the physical skills they need.
 
-Not here yet: any model other than the oracle and one short reinforcement-learning run (which fails the task), camera observations, force feedback, and anything on real hardware. The [board](board/README.md) shows what is in progress.
+Not here yet: a rankable result for any model other than the oracle (there is one short reinforcement-learning run, which fails the task, and this fork's exploratory language-model runs below), camera observations, force feedback to a learned policy, and anything on real hardware. The [board](board/README.md) shows what is in progress.
+
+## Language models on this fork (exploratory)
+This fork ([`psyberLC/solarbench`](https://github.com/psyberLC/solarbench), branch `live-viewer`) puts NVIDIA Nemotron models in charge of both tasks. The runs are exploratory, and none of them tests the hypotheses in `paper/`. They use the dev split with one seed, the models are not pre-registered, and on the connector the brain only orders steps. Nothing here is in `results/`.
+
+**What was built.**
+- **Model adapter.** The chat-completions adapter (`solarbench/agents/endpoint.py`) takes native tool calls. It also takes pose helpers (`aim`, `push`, `turn`) that do the inverse kinematics for the model, an option to give it the oracle's readings, and a recording of every exchange.
+- **Bolt skills.** Closed-loop skills for the bolt (`solarbench/agents/skills.py`: `seat`, `tighten_to`, `unload`, `retract`) work **without privileged data**. They use the work order, the tool pose and the wrist force-torque sensor. The skills do the control every tick, and the model picks the next one.
+- **Connector skills.** A phases policy (`solarbench/agents/phases.py`) lets a model order the connector oracle's own phase groups. It is privileged, because the task offers only the privileged channel.
+- **Tooling.** A recording proxy, a replay server, a live viewer script and a comparison script, all under `NOTES/`.
+
+**Headline numbers.** Oracle against a fixed sequence of the same skills against Nemotron 3.5 Super (120B-A12B, served by vLLM on RTU's HPC). All three ran on the same dev episodes 0–31 with one environment, under each task's own time limit and work order. Each cell is safe successes out of valid episodes, with the 95% interval.
+
+| Task | Oracle (privileged) | Skills, fixed sequence | Skills, Nemotron 3.5 Super |
+|---|---|---|---|
+| Bolt, R2 pose interface (`…T3-ClampTighten-UR16e-R2-v0`) | 30/32 (80–98%) | 32/32 (89–100%), unprivileged | 26/32 (65–91%), unprivileged |
+| Connector (`SolarBench-T2-MC4-G1-v0`) | 32/32 (89–100%) | 29/31 (79–98%), privileged | 28/31 (75–97%), privileged |
+
+No episode was damaged. Without skills, when the model sent poses itself, Nemotron 3 Nano and 3.5 Lightning never succeeded safely on the bolt.
+
+**Read more.**
+- [NOTES/SKILLS_REPORT.md](NOTES/SKILLS_REPORT.md): the comparison and why the model lost the episodes it lost. Its tables are generated from the result files in [NOTES/report-runs-32/](NOTES/report-runs-32/tables.md).
+- [NOTES/REPORT.md](NOTES/REPORT.md): the first laptop experiment, where the model sent raw poses.
+- [NOTES/LIVE_LESSONS.md](NOTES/LIVE_LESSONS.md): what watching the models in the viewer taught.
+- [NOTES/HPC_PLAN.md](NOTES/HPC_PLAN.md): serving Super on the cluster.
+
+**Run it.** Start a local model server, or point at a remote one with its key in `SOLARBENCH_ENDPOINT_KEY`:
+```bash
+MODEL=~/llm/models/<model>.gguf NOTES/serve.sh --daemon                 # llama.cpp on 127.0.0.1:8080
+.venv/bin/python NOTES/probes/watch_proxy.py --to http://127.0.0.1:8080  # shows the model's thinking live, on :8081
+OUT=/tmp/live TOOLS=on SKILLS=on NOTES/live.sh                          # watch it in the Newton viewer, unprivileged
+OUT=NOTES/report-runs-new EPISODES=32 NOTES/report_runs.sh               # the oracle / script / model comparison
+```
 
 ## Words used here
 | Term | Meaning |

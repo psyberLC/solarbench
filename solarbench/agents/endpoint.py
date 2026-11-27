@@ -21,10 +21,10 @@ earlier attempts); the result records the file's name.
 ``keep_thinking=on`` sends the model's earlier thinking back with its earlier replies and asks the chat template to
 keep it (``truncate_history_thinking`` off), so it need not work everything out again each round. The conversation
 then grows by each round's thinking: cap it with the server's thinking budget and ``rounds``.
-``skills=on`` (with ``tools=on`` and ``privileged=on``) adds closed-loop skills as tools: seat, tighten_to, unload,
-retract (``solarbench/agents/skills.py``). While one runs, the policy sends a pose every tick without asking the
-model; when it ends, how it ended goes back as that call's result. This makes the task far easier: the model only
-sequences skills.
+``skills=on`` (with ``tools=on``, and ``wrench=on`` or ``privileged=on``) adds closed-loop skills as tools: seat,
+tighten_to, unload, retract (``solarbench/agents/skills.py``). While one runs, the policy sends a pose every tick
+without asking the model; when it ends, how it ended goes back as that call's result. This makes the task far
+easier: the model only sequences skills.
 ``host=remote`` records the model as remote when the URL is local only because of a tunnel (the default is read
 from the URL's host).
 ``tools=on`` drives the model through native tool calls instead of a line of JSON: aim, push, turn, push_and_turn,

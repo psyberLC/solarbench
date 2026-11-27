@@ -1,6 +1,40 @@
-# Skills for a small open model: oracle vs fixed script vs Nemotron 3.5 Lightning
+# Skills for a model: oracle vs fixed script vs Nemotron 3.5 Super and Lightning
 
-Laptop runs of 2026-11-27 by claude-code (for psyberLC) on the fork's `live-viewer` branch. Exploratory: these are not benchmark results, they are not in `results/`, and the setups below are easier than the benchmark's tasks. How the setups came about is in [LIVE_LESSONS.md](LIVE_LESSONS.md).
+Runs of 2026-11-27 by claude-code (for psyberLC), the simulation always on the laptop (Super served from RTU's HPC), on the fork's `live-viewer` branch. Exploratory: these are not benchmark results, they are not in `results/`, and the setups below are easier than the benchmark's tasks. How the setups came about is in [LIVE_LESSONS.md](LIVE_LESSONS.md).
+
+## 32 episodes: oracle vs fixed script vs Nemotron 3.5 Super
+Run 2026-11-27, 16:56–18:39, with the same setup as the 8-episode comparison below, on dev episodes 0–31. The model is `nemotron-3.5-super-vl` (Nemotron 3.5 Super VL 120B-A12B). It was served by vLLM on RTU's HPC and reached over HTTPS through a Cloudflare tunnel. The server's quantisation and settings are not recorded here. Thinking was on, temperature 1.0, top-p the server's default. Bolt: unprivileged skills. Connector: privileged phase skills, the only kind the task allows. The code was commit `3ace4f2`; the Super connector run was repeated at `e41a5ba` (below). Script: `OUT=NOTES/report-runs-32 EPISODES=32 MODEL=nemotron-3.5-super-vl UPSTREAM=<server> HOST=remote TEMP=1.0 NOTES/report_runs.sh`. Full tables and per-episode outcomes: [report-runs-32/tables.md](report-runs-32/tables.md).
+
+| | Bolt (T3, R2): safe success | median release, s | Connector (T2): safe success | median release, s |
+|---|---|---|---|---|
+| oracle (privileged) | 30/32 (94%, 80–98) | 15.0 | 32/32 (100%, 89–100) | 5.1 |
+| skills, fixed sequence | 32/32 (100%, 89–100), unprivileged | 18.0 | 29/31 valid (94%, 79–98), privileged | 5.3 |
+| skills, Nemotron 3.5 Super | 26/32 (81%, 65–91), unprivileged | 16.9 | 28/31 valid (90%, 75–97), privileged | 5.3 |
+
+No run damaged anything. Every bolt episode was valid. On the connector, the script run and the Super run each lost one episode to a numerical failure (episodes 3 and 14), which the evaluator excludes.
+
+**Bolt.**
+- **Super's safe episodes landed 15.47–16.11 N·m.** That is its own choice of 16 N·m, inside the 14–18 window. In all but two of the 26 it used the minimal 6 calls (stand off, close in, `seat`, `tighten_to`, `unload`, `retract`); the other two took 7.
+- **Model use.** 215 calls, median 209 tokens and 2.3 s per call, 27.2 min of model time in all. Two calls ran into the 12,288-token cap without a tool call (episodes 4 and 29); the adapter asked again.
+- **The losses come from one recovery choice.** On 6 bolts (episodes 9, 13, 16, 17, 18, 29 in the script run) `seat` ends "not seated after 10 s". The socket is on the head but has not dropped over the flats. The fixed script ignores that and calls `tighten_to`, whose turning under a press drops the socket onto the flats. It won all 6, engaging late (20.6–27.2 s) and releasing with as little as 2 s to spare.
+  - **What Super did.** Its `seat` failed on 6 bolts (9, 16, 17, 18, 28, 29). On episode 28 it re-aimed once and then called `tighten_to`, and won. On the other 5 it believed the message: it re-aimed, rotated the socket or called `seat` again. All 5 ran out of time. On 9, 16, 17 and 18 no stage was reached in time; on 29 it seated at 24 s and timed out tightening at 11 N·m.
+  - **The skill shares the blame.** `seat` reports failure where `tighten_to` would succeed, and nothing in its description says so. The script's order works by accident, not by design.
+- **Episode 8 was lost after the bolt was in spec.** Super reached 15.9 N·m (in spec at 15.6 s) and unloaded. `retract` then twice ended "the socket is still on the head", a failure the script never met. Super then aimed with the socket rotated while it was still on the head, which turned the bolt back. It ended at 1.0 N·m installed, never released. This is the one case where a model's recovery undid finished work. No damage is scored for loosening.
+- **The oracle lost 2 episodes, 13 and 18.** Both are hard bolts for the skills too. In each it installed 16.09 N·m, inside the window, and ran the full 30 s without the evaluator ever counting the `engaged` stage. That stage needs the tool within depth, lateral and angle limits of the head, and the oracle never moved on to release. This was not investigated. It looks like the oracle turning the bolt from just outside the geometric engagement limits, and it may matter upstream; it is an observation from one run, not a confirmed defect.
+
+**Connector.**
+- **Super ordered the four steps minimally in 28 of 32 episodes.** That is grasp, unplug, plug_in, release. It used 135 calls, median 124 tokens per call, and 3.3 min of model time; every call was a usable tool call. One 429 from the server was waited through.
+- **Every failure of the script and of Super is the same `plug_in` flaw.** The skill ends "finished" with the latch not engaged. That happened to the script on episodes 11 and 21, and to Super on 5, 10 and 25: different episodes, so it is not tied to a connector. On Super's three the plug was 17–29 mm off the sleeve's axis; the script's log does not record the offset.
+  - **What the script did.** It released anyway and failed.
+  - **What Super did.** It saw the latch was not engaged and called `plug_in` again, twice, or `grasp`. From the misaligned pose, the repeated skill lost the grip and pulled the housing away (to 438 mm out on episode 5), so the retries never helped.
+  - **The oracle never met this.** It runs the same phases without the held tick that the phase skills add at each skill boundary (see the 8-episode notes below). That tick is the likely cause, but this is not verified.
+- **This tests sequencing, not control,** because the skills run the oracle's own controller. Super's 28/31 and the script's 29/31 are not distinguishable at this sample size.
+
+**What changed during these runs.** The first Super connector run stopped after 16 episodes: the HPC server answered `429 Too Many Requests` and the phases adapter had no retry. Commit `e41a5ba` gives both adapters one request function that waits on 429 (the server's `Retry-After`, else 30 s, at most ten times). The run was then repeated from episode 0. The stopped run's partial logs are not kept. Nothing else changed between runs.
+
+---
+
+## Earlier: 8 episodes with Nemotron 3.5 Lightning on the laptop
 
 ## What was compared
 Three brains on the **same 8 episodes** (dev split, episodes 0–7: the same bolts, connectors and draws), one environment at a time, each task's **own time limit and work order** (bolt 30 s, connector 24 s), code at commit `b993000`:
@@ -53,7 +87,7 @@ The same endpoint drove the connector task's phase skills (privileged by necessi
 ## What this does not show
 - Anything about controlling a robot without skills: there, on the same bolt task, Nemotron 3 Nano and 3.5 Lightning never succeeded safely in `NOTES/REPORT.md` and `LIVE_LESSONS.md`.
 - Anything about the humanoid without privileged data (impossible as the task is built).
-- Rankings: 8 episodes, one seed, the dev split, one quantised model on one laptop; intervals are wide. Model sampling and GPU arithmetic are not exactly repeatable.
+- Rankings: 32 (or 8) episodes, one seed, the dev split, models not pre-registered; intervals are wide. Model sampling and GPU arithmetic are not exactly repeatable, and Super and Lightning ran on different tool descriptions (the 50 mm stand-off came after the Lightning runs), so the two models are not compared.
 
 ## Provenance
 - Every run: commit `b993000` of `live-viewer` (laptop-llm + upstream PR #14 merged locally), Newton physics, RTX 4060 Laptop GPU, `solarbench_dirty: true` because the runs' own outputs were written under `NOTES/` while they ran.
