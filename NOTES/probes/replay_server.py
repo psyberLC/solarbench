@@ -1,22 +1,50 @@
-"""Replay a recorded agent_bridge run: answer each request with the reply recorded for it, in order.
+"""Play a recorded run back into the simulation: answer each request with the answer recorded for it, in order.
 
-The sim waits for every reply, so the same replies should give the same run. Each request's newest message is compared
-with the recorded one, and a difference is printed, so a replay that drifts from the original shows where.
+Two kinds of recording:
+  --dir DIR             an agent_bridge run (DIR/request-NNN.json and DIR/reply-NNN.txt)
+  --exchanges FILE      a model run recorded by watch_proxy.py --log (one JSON line per call: request and answer,
+                        with thinking and tool calls)
+The simulation waits for every answer, so the same answers should give the same run; it is not exactly repeatable
+(contact forces drift in the 3rd-4th decimal after a few rounds), so each request's newest message is compared with
+the recorded one and a difference is reported. The recorded thinking and reply are printed as each round is served.
+--pace 1 waits as long as the model took (0, the default, answers at once); --pace 0.25 plays four times faster.
 
-  .venv/bin/python NOTES/probes/replay_server.py --dir DIR [--port 8083]
+  .venv/bin/python NOTES/probes/replay_server.py --exchanges NOTES/live-runs/<run>/exchanges.jsonl --pace 0.5
+  URL=http://127.0.0.1:8083/v1 ... NOTES/live.sh thinking=on      (the run's original settings; see its result file)
 """
 
 import argparse
 import json
 import pathlib
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--dir", required=True)
+source = parser.add_mutually_exclusive_group(required=True)
+source.add_argument("--dir")
+source.add_argument("--exchanges")
 parser.add_argument("--port", type=int, default=8083)
+parser.add_argument("--pace", type=float, default=0.0, help="fraction of the recorded wall time to wait per answer")
 args = parser.parse_args()
-folder = pathlib.Path(args.dir)
-count = 0
+DIM, BOLD, YELLOW, RED, END = "\033[2m", "\033[1m", "\033[33m", "\033[31m", "\033[0m"
+
+
+def recorded() -> list[tuple[dict, dict, float]]:
+    """(request, answer, wall seconds) for each recorded call, in order."""
+    if args.exchanges:
+        lines = [json.loads(line) for line in pathlib.Path(args.exchanges).read_text().splitlines() if line.strip()]
+        return [(x["request"], x["answer"], x.get("wall_s", 0.0)) for x in lines]
+    folder, calls = pathlib.Path(args.dir), []
+    for request_file in sorted(folder.glob("request-*.json")):
+        reply = folder / request_file.name.replace("request-", "reply-").replace(".json", ".txt")
+        if reply.exists():
+            message = {"role": "assistant", "content": reply.read_text()}
+            calls.append((json.loads(request_file.read_text()), {"choices": [{"index": 0, "message": message,
+                                                                              "finish_reason": "stop"}]}, 0.0))
+    return calls
+
+
+CALLS, count = recorded(), 0
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -33,22 +61,32 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         global count
-        count += 1
         request = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
-        recorded = json.loads((folder / f"request-{count:03d}.json").read_text())
-        same = request["messages"][-1]["content"] == recorded["messages"][-1]["content"]
-        print(f"request {count}: {'same state as recorded' if same else 'DIFFERENT state from recorded'}", flush=True)
+        if count >= len(CALLS):
+            print(f"{RED}request {count + 1}: the recording has only {len(CALLS)} calls{END}", flush=True)
+            self.send_response(503)
+            self.end_headers()
+            return
+        was, answer, wall = CALLS[count]
+        count += 1
+        same = request["messages"][-1].get("content") == was["messages"][-1].get("content")
+        state = "same state as recorded" if same else "state differs from the recording"
+        print(f"\n{BOLD}── call {count}/{len(CALLS)}: {state}{END}")
         if not same:
-            print(f"  recorded: {recorded['messages'][-1]['content']!r}")
-            print(f"  now:      {request['messages'][-1]['content']!r}")
-        content = (folder / f"reply-{count:03d}.txt").read_text()
-        self._send({"object": "chat.completion", "model": request.get("model"), "usage": {},
-                    "choices": [{"index": 0, "message": {"role": "assistant", "content": content},
-                                 "finish_reason": "stop"}]})
+            print(f"{DIM}recorded: {was['messages'][-1].get('content')!r}")
+            print(f"now:      {request['messages'][-1].get('content')!r}{END}")
+        message = answer["choices"][0]["message"]
+        if thought := message.get("reasoning_content") or message.get("reasoning"):
+            print(f"{YELLOW}thinking:\n{thought.strip()}{END}")
+        calls = "; ".join(f"{c['function']['name']}({c['function']['arguments']})"
+                          for c in message.get("tool_calls") or [])
+        print(f"{BOLD}reply:{END} {(message.get('content') or '').strip()} {calls}", flush=True)
+        time.sleep(args.pace * wall)
+        self._send(answer)
 
     def log_message(self, *_):
         pass
 
 
-print(f"replaying {folder} on http://127.0.0.1:{args.port}", flush=True)
+print(f"replaying {len(CALLS)} calls from {args.exchanges or args.dir} on http://127.0.0.1:{args.port}", flush=True)
 ThreadingHTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
