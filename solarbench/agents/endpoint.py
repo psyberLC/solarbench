@@ -4,7 +4,7 @@ Where the model runs is a URL. A local server for open weights and a remote serv
 Settings come with the policy name, or else from the environment variable named beside each:
     --policy endpoint:<model>[,wrench=on][,reasoning=on][,temperature=0][,max_tokens=4096][,seed=0][,rounds=40]
                              [,log=<file.jsonl>][,url=<base url>][,commands=pose][,privileged=off][,notes=<file>]
-                             [,keep_thinking=off][,tools=off][,host=local|remote]
+                             [,keep_thinking=off][,tools=off][,skills=off][,host=local|remote]
     SOLARBENCH_ENDPOINT_URL        the server's base address, ending in /v1 (or url=)
     SOLARBENCH_ENDPOINT_LOG        a JSON-lines file that gets one line per call (or log=)
     SOLARBENCH_ENDPOINT_KEY        sent as a bearer token if set; never stored, logged or written to a result
@@ -21,6 +21,10 @@ earlier attempts); the result records the file's name.
 ``keep_thinking=on`` sends the model's earlier thinking back with its earlier replies and asks the chat template to
 keep it (``truncate_history_thinking`` off), so it need not work everything out again each round. The conversation
 then grows by each round's thinking: cap it with the server's thinking budget and ``rounds``.
+``skills=on`` (with ``tools=on`` and ``privileged=on``) adds closed-loop skills as tools: seat, tighten_to, unload,
+retract (``solarbench/agents/skills.py``). While one runs, the policy sends a pose every tick without asking the
+model; when it ends, how it ended goes back as that call's result. This makes the task far easier: the model only
+sequences skills.
 ``host=remote`` records the model as remote when the URL is local only because of a tunnel (the default is read
 from the URL's host).
 ``tools=on`` drives the model through native tool calls instead of a line of JSON: aim, push, turn, push_and_turn,
@@ -54,7 +58,7 @@ import numpy as np
 import torch
 
 from solarbench import wire
-from solarbench.agents import prompts, register, select
+from solarbench.agents import prompts, register, select, skills
 
 REPLY = """
 ## Commands
@@ -148,7 +152,7 @@ ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED
 ENCODING = "text, 4 decimals"
 OPTIONS = {"wrench": "off", "reasoning": "on", "temperature": "0", "max_tokens": "4096", "seed": "0", "rounds": "40",
            "log": "", "url": "", "commands": "pose", "privileged": "off", "notes": "", "keep_thinking": "off",
-           "tools": "off", "host": ""}
+           "tools": "off", "skills": "off", "host": ""}
 _DECODER = json.JSONDecoder()
 
 
@@ -341,6 +345,9 @@ class EndpointPolicy:
         if options["commands"] not in ("pose", "assist"):
             raise ValueError(f"commands=pose or commands=assist, got {options['commands']!r}")
         self._tools = options["tools"] == "on"
+        self._skills = options["skills"] == "on"
+        if self._skills and not (self._tools and options["privileged"] == "on"):
+            raise ValueError("skills=on needs tools=on and privileged=on")
         self._assist = options["commands"] == "assist" or self._tools
         privileged = options["privileged"] == "on"
         offered = {channel["name"] for channel in catalogue["channels"]}
@@ -349,7 +356,8 @@ class EndpointPolicy:
         self.selection = {**select(catalogue, *wanted), "depth": 1, "wake": "idle"}
         self.name = ("endpoint-" + re.sub(r"[^A-Za-z0-9.]+", "-", model) + ("-force" if wrench else "-noforce")
                      + ("" if reasoning else "-noreasoning") + ("-assist" if self._assist else "")
-                     + ("-privileged" if privileged else "") + ("-tools" if self._tools else ""))
+                     + ("-privileged" if privileged else "") + ("-tools" if self._tools else "")
+                     + ("-skills" if self._skills else ""))
         if options["host"] not in ("", "local", "remote"):
             raise ValueError(f"host=local or host=remote, got {options['host']!r}")
         local = (options["host"] == "local" if options["host"]
@@ -360,7 +368,8 @@ class EndpointPolicy:
                          "max_tokens": int(options["max_tokens"]), "seed": int(options["seed"]),
                          "rounds": int(options["rounds"]), "commands": options["commands"], "privileged": privileged,
                          "notes": os.path.basename(options["notes"]),
-                         "keep_thinking": options["keep_thinking"] == "on", "tools": self._tools}
+                         "keep_thinking": options["keep_thinking"] == "on", "tools": self._tools,
+                         "skills": self._skills}
         self._catalogue, self._layout = catalogue, wire.Layout(catalogue, self.selection)
         notes = "\n" + Path(options["notes"]).read_text() if options["notes"] else ""
         reply = TOOLS_REPLY if self._tools else REPLY_ASSIST if self._assist else REPLY
@@ -370,6 +379,7 @@ class EndpointPolicy:
         self._sent: dict[int, int | None] = {}  # id of the last command each environment sent
         self._target: dict[int, np.ndarray | None] = {}  # position the last pose command asked for
         self._call: dict[int, str | None] = {}  # id of the tool call the next state report answers (tools=on)
+        self._skill: dict[int, skills.Skill | None] = {}  # the closed-loop skill running on each environment
         self._episode: dict[int, int] = {}  # how many episodes each environment has started
         self._unread: set[int] = set()
         self.calls: dict[int, list[dict]] = {}  # per environment, one entry per call in the episode under way
@@ -385,13 +395,15 @@ class EndpointPolicy:
                 self.finished.append(self.calls[env])
             self._messages[env] = [{"role": "system", "content": self._system}, {"role": "user", "content": work_order}]
             self._sent[env], self._target[env], self._call[env], self.calls[env] = None, None, None, []
+            self._skill[env] = None
             self._episode[env] = self._episode.get(env, -1) + 1
             self._unread.discard(env)
 
     def _post(self, messages: list[dict], retry: bool = False) -> dict:
         s = self.settings
         body = {"model": s["model"], "messages": messages, "temperature": s["temperature"],
-                "max_tokens": s["max_tokens"], "seed": s["seed"] + retry, **({"tools": TOOLS} if self._tools else {}),
+                "max_tokens": s["max_tokens"], "seed": s["seed"] + retry,
+                **({"tools": TOOLS + (skills.tools() if self._skills else [])} if self._tools else {}),
                 "chat_template_kwargs": {"enable_thinking": s["reasoning"],
                                          **({"truncate_history_thinking": False} if s["keep_thinking"] else {})}}
         headers = {"Content-Type": "application/json"}
@@ -454,7 +466,7 @@ class EndpointPolicy:
             message = choice["message"]
             reply, thought = message.get("content") or "", _thought(message)
             tool_calls = message.get("tool_calls") or []
-            command, usage = parse_call(tool_calls[0], pose) if tool_calls else None, answer.get("usage", {})
+            command, usage = self._read_call(tool_calls[0], pose) if tool_calls else None, answer.get("usage", {})
             call = {"wall_s": time.perf_counter() - started, "tokens_read": usage.get("prompt_tokens"),
                     "tokens_written": usage.get("completion_tokens"),
                     "tokens_cached": (usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
@@ -471,6 +483,34 @@ class EndpointPolicy:
         messages.append({"role": "assistant", "content": reply, **({"reasoning_content": thought} if thought else {})})
         self._call[env] = None
         return None
+
+    def _read_call(self, call: dict, pose):
+        """A pose command, or ``("skill", name, arguments)`` for a skill (skills=on), or ``None``."""
+        function = call.get("function") or {}
+        if self._skills and function.get("name") in skills.DESCRIPTIONS:
+            try:
+                arguments = json.loads(function.get("arguments") or "{}")
+            except ValueError:
+                return None
+            required = skills.REQUIRED[function["name"]]
+            if not isinstance(arguments, dict) or not all(_number(arguments.get(k)) for k in required):
+                return None
+            return "skill", function["name"], arguments
+        return parse_call(call, pose)
+
+    def _readings(self, frame: dict, env: int) -> dict:
+        """What a skill reads each tick, from proprio and the privileged channel."""
+        tool, quat = _tool_pose(self._catalogue, frame, env)
+        fields, row = by_field(self._catalogue, "policy"), frame["policy"][env]
+
+        def field(name):
+            f = fields[name]
+            return np.array(row[f["start"] : f["start"] + f["count"]], float) * f.get("scale", 1.0)
+
+        rel, axis = field("head_top_minus_tool"), field("bolt_axis")
+        return {"tool_pos": tool, "tool_quat": quat, "head": tool + rel, "axis": axis, "depth": float(rel @ axis),
+                "drive": float(field("drive_torque")[0]), "installed": float(field("installed_torque")[0]),
+                "engaged": bool(field("engaged")[0] > 0.5)}
 
     def _write_log(self, env, tick, call, reply, thought, command) -> None:
         if not self._log:
@@ -489,27 +529,50 @@ class EndpointPolicy:
         clock = frame["clock"]
         records = np.zeros((len(clock), 1), wire.COMMAND)
         rounds = self.settings["rounds"]
-        awake = [env for env in range(len(clock)) if clock[env]["flags"] & wire.AWAKE
-                 and sum(not call["retry"] for call in self.calls[env]) < rounds]
+        awake = [env for env in range(len(clock)) if clock[env]["flags"] & wire.AWAKE]
         if not awake:
             return None
-        texts, poses = [], [_tool_pose(self._catalogue, frame, env) if self._assist else None for env in awake]
-        for env, pose in zip(awake, poses, strict=True):
-            text = describe(self._catalogue, self._layout, frame, env, self._sent[env], pose, self._target.get(env))
-            texts.append(UNREAD + text if env in self._unread else text)
-        ticks = [int(clock[env]["tick"]) for env in awake]
+        asked, prefixes = [], {}
+        for env in awake:
+            if self._skill.get(env) is not None:  # a running skill answers this tick itself
+                done = self._skill[env].step(self._readings(frame, env))
+                if not isinstance(done, str):
+                    self._command(records, env, clock, (wire.TOOL_POSE, [*done[0], *done[1]]), skill=True)
+                    continue
+                prefixes[env] = f"{self._skill[env].name} finished: {done}\n"
+                self._skill[env] = None
+            if sum(not call["retry"] for call in self.calls[env]) < rounds:
+                asked.append(env)
+        if not asked:
+            return torch.from_numpy(records.view("<i4").reshape(len(clock), 1, 16)).to(obs["clock"].device)
+        texts, poses = [], [_tool_pose(self._catalogue, frame, env) if self._assist else None for env in asked]
+        for env, pose in zip(asked, poses, strict=True):
+            sent = None if env in prefixes else self._sent[env]  # a skill's last one-tick record says nothing
+            text = describe(self._catalogue, self._layout, frame, env, sent, pose, self._target.get(env))
+            texts.append(prefixes.get(env, "") + (UNREAD + text if env in self._unread else text))
+        ticks = [int(clock[env]["tick"]) for env in asked]
         self._pool = self._pool or ThreadPoolExecutor(max_workers=len(clock))
-        for env, command in zip(awake, self._pool.map(self._ask, awake, texts, ticks, poses), strict=True):
+        for env, command in zip(asked, self._pool.map(self._ask, asked, texts, ticks, poses), strict=True):
             if command is None:
                 self._unread.add(env)
                 continue
             self._unread.discard(env)
-            self._sent[env] = (self._sent[env] or 0) + 1
-            record = records[env, 0]
-            record["opcode"], record["id"], record["based_on"] = command[0], self._sent[env], clock[env]["tick"]
-            record["args"][: len(command[1])] = command[1]
-            self._target[env] = np.array(command[1][:3]) if command[0] == wire.TOOL_POSE else None
+            if command[0] == "skill":  # starts next tick, from that tick's readings
+                self._skill[env] = skills.Skill(command[1], command[2], self._readings(frame, env),
+                                                self._catalogue["tick_hz"])
+                continue
+            self._command(records, env, clock, command)
         return torch.from_numpy(records.view("<i4").reshape(len(clock), 1, 16)).to(obs["clock"].device)
+
+    def _command(self, records, env: int, clock, command, skill: bool = False) -> None:
+        """Write one command record; a skill's pose runs for one tick and replaces anything still running."""
+        self._sent[env] = (self._sent[env] or 0) + 1
+        record = records[env, 0]
+        record["opcode"], record["id"], record["based_on"] = command[0], self._sent[env], clock[env]["tick"]
+        record["args"][: len(command[1])] = command[1]
+        if skill:
+            record["timeout"], record["flags"] = 1, wire.REPLACE
+        self._target[env] = np.array(command[1][:3]) if command[0] == wire.TOOL_POSE else None
 
 
 register("endpoint")(EndpointPolicy)
