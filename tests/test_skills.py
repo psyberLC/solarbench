@@ -114,3 +114,40 @@ def test_a_skill_runs_between_model_calls_and_reports_back_as_the_calls_result(s
     assert result["role"] == "tool" and result["tool_call_id"] == "s1" and result["content"].startswith("seat finished")
     assert {t["function"]["name"] for t in seen[0]["tools"]} >= {"seat", "tighten_to", "unload", "retract", "aim"}
     assert json.loads(log.read_text().splitlines()[0])["command"] == ["skill", "seat", {}]  # a skill call is logged
+
+
+@pytest.mark.unit
+def test_the_work_order_gives_the_head_and_axis_without_privilege():
+    from solarbench.agents import prompts
+    from solarbench.agents.endpoint import work_order_geometry
+
+    text = prompts.work_order("SolarBench-T3-ClampTighten-UR16e-R2-v0", loose_min_deg=149, loose_max_deg=212,
+                              installed_min=1, installed_max=2, engage_depth_mm=2.5, engage_lateral_mm=1.2,
+                              engage_angle_deg=6, torque_min=14, torque_max=18, backoff_turns=1, released_mm=30,
+                              time_limit_s=30, head_x=0.4201, head_y=0.0147, head_z=0.4386, axis_x=0.0,
+                              axis_y=0.342, axis_z=0.9397)
+    head, axis = work_order_geometry(text)
+    assert np.allclose(head, [0.420, 0.015, 0.439]) and np.allclose(axis, AXIS / np.linalg.norm(AXIS), atol=1e-3)
+
+
+@pytest.mark.unit
+def test_without_privilege_the_drive_torque_is_the_sensor_then_extrapolated_against_the_measured_turn():
+    start = {**readings(depth=0.004, engaged=True), "drive": None, "torque_z": 0.0}
+    skill = Skill("tighten_to", {"torque_Nm": 30.0}, start, 30)
+    q0 = start["tool_quat"]
+
+    def turned_by(angle, sensed):
+        return {**start, "tool_quat": _qmul(q0, np.array([0, 0, math.sin(angle / 2), math.cos(angle / 2)])),
+                "torque_z": -sensed}
+
+    for k in range(40):  # in range: 2 N·m + 10 N·m per radian the tool actually turned
+        assert skill.drive(turned_by(0.02 * k, 2.0 + 0.2 * k)) == pytest.approx(2.0 + 0.2 * k)
+    assert skill.drive(turned_by(1.3, 10.0)) == pytest.approx(15.0)  # the sensor clips at 10; the line says 15
+
+
+@pytest.mark.unit
+def test_without_privilege_unload_waits_for_several_quiet_readings():
+    start = {**readings(depth=0.004, engaged=True), "drive": None, "torque_z": 0.0}
+    unload = Skill("unload", {}, start, 30)
+    results = [unload.step({**start, "torque_z": -0.05}) for _ in range(10)]  # 8 quiet, then ~1 degree more
+    assert not any(isinstance(x, str) for x in results[:9]) and results[9].startswith("unloaded")

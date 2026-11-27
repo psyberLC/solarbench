@@ -144,6 +144,14 @@ _CALLS = {"aim": lambda a: {"aim": a.get("aim"), "socket_toward": a.get("socket_
           "push_and_turn": lambda a: {"push_mm": a.get("mm"), "turn_deg": a.get("deg")},
           "pose": lambda a: {"position": a.get("position"), "quaternion": a.get("quaternion")},
           "done": lambda a: {"done": True}}
+GEOMETRY = """
+## Readings worked out for you
+Each round also gives, computed from the head position and axis the work order states (to the millimetre it is \
+printed in) and the tool pose: where the top of the head is, how deep the socket is on it (said in words), how far \
+and which way the socket is off the bolt's axis, the angle between them, and three ready commands: one that \
+centres the socket on the axis where it is now, one that centres it 0.5 mm out from the head top, and one that \
+puts it 50 mm out on the axis. They are only as exact as the work order's numbers, about half a millimetre.
+"""
 AGAIN = 'That reply did not end with a command that could be read. Send only the line of JSON.'
 UNREAD = "Your last reply did not end with a command that could be read.\n"
 ENDED = {wire.OK: "arrived", wire.STALLED: "stalled before arriving", wire.TIMED_OUT: "ran out of time",
@@ -268,7 +276,8 @@ def _command(data, pose: tuple[np.ndarray, np.ndarray] | None) -> tuple[int, lis
 
 
 def describe(catalogue: dict, layout: wire.Layout, frame: dict[str, np.ndarray], env: int, sent: int | None,
-             pose: tuple[np.ndarray, np.ndarray] | None = None, target: np.ndarray | None = None) -> str:
+             pose: tuple[np.ndarray, np.ndarray] | None = None, target: np.ndarray | None = None,
+             geometry: tuple[np.ndarray, np.ndarray] | None = None) -> str:
     """One environment's frame as text: the tick, how the last command ended, then each field of each channel, and,
     given the tool ``pose``, the direction the socket points."""
     lines = [f"tick {int(frame['clock'][env]['tick'])}"]
@@ -287,8 +296,8 @@ def describe(catalogue: dict, layout: wire.Layout, frame: dict[str, np.ndarray],
             lines.append(f"{field['name']} [{field['unit']}]: " + ", ".join(f"{value:.4f}" for value in values))
     if pose is not None:
         lines.append("socket points along (tool z, base frame): " + ", ".join(f"{v:.4f}" for v in _axis(pose[1], 2)))
-    if "head_top_minus_tool" in by_field(catalogue, "policy"):
-        lines += _seating(catalogue, frame, env, target)
+    if "head_top_minus_tool" in by_field(catalogue, "policy") and "policy" in frame or geometry is not None:
+        lines += _seating(catalogue, frame, env, target, geometry)
     return "\n".join(lines)
 
 
@@ -296,15 +305,39 @@ def by_field(catalogue: dict, channel: str) -> dict:
     return {f["name"]: f for c in catalogue["channels"] if c["name"] == channel for f in c.get("fields", ())}
 
 
-def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int, target: np.ndarray | None) -> list[str]:
-    """Where the socket is on the head, from the privileged channel, and three ready aims along the axis. ``target`` is
-    the position the last pose command asked for: the gap between it and where the socket settled is carried into
-    the suggested aims, as an integrator would."""
-    fields, row = by_field(catalogue, "policy"), frame["policy"][env]
-    rel, axis = (np.array(row[fields[k]["start"] : fields[k]["start"] + 3], float) for k in ("head_top_minus_tool",
-                                                                                              "bolt_axis"))
+_SITE = re.compile(r"top of its head is at \(([-\d.]+), ([-\d.]+), ([-\d.]+)\) m in the base frame, and its axis "
+                   r"points out of the head along \(([-\d.]+), ([-\d.]+), ([-\d.]+)\)")
+
+
+def work_order_geometry(work_order: str) -> tuple[np.ndarray, np.ndarray] | None:
+    """The head top and bolt axis a work order states (to its printed precision), or ``None``."""
+    found = _SITE.search(work_order)
+    if not found:
+        return None
+    numbers = np.array([float(x) for x in found.groups()])
+    return numbers[:3], numbers[3:] / np.linalg.norm(numbers[3:])
+
+
+def _site(catalogue: dict, frame: dict[str, np.ndarray], env: int, geometry) -> tuple[np.ndarray, np.ndarray]:
+    """Head top and bolt axis: from the privileged channel if the policy selected it, else the work order's."""
+    fields = by_field(catalogue, "policy")
+    if "head_top_minus_tool" in fields and "policy" in frame:
+        row = frame["policy"][env]
+        rel, axis = (np.array(row[fields[k]["start"] : fields[k]["start"] + 3], float)
+                     for k in ("head_top_minus_tool", "bolt_axis"))
+        return _tool_pose(catalogue, frame, env)[0] + rel, axis
+    return geometry
+
+
+def _seating(catalogue: dict, frame: dict[str, np.ndarray], env: int, target: np.ndarray | None,
+             geometry=None) -> list[str]:
+    """Where the socket is on the head and three ready aims along the axis, from the privileged channel or else
+    from the work order's geometry and the tool pose. ``target`` is the position the last pose command asked for:
+    the gap between it and where the socket settled is carried into the suggested aims, as an integrator would."""
     tool, quat = _tool_pose(catalogue, frame, env)
-    head, depth = tool + rel, float(rel @ axis)
+    head, axis = _site(catalogue, frame, env, geometry)
+    rel = head - tool
+    depth = float(rel @ axis)
     side = -(rel - depth * axis)  # from the bolt's axis to the socket's centre, across the axis
     lateral = float(np.linalg.norm(side))
     tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(-_axis(quat, 2) @ axis)))))
@@ -346,10 +379,11 @@ class EndpointPolicy:
             raise ValueError(f"commands=pose or commands=assist, got {options['commands']!r}")
         self._tools = options["tools"] == "on"
         self._skills = options["skills"] == "on"
-        if self._skills and not (self._tools and options["privileged"] == "on"):
-            raise ValueError("skills=on needs tools=on and privileged=on")
+        if self._skills and not (self._tools and (options["privileged"] == "on" or options["wrench"] == "on")):
+            raise ValueError("skills=on needs tools=on, and privileged=on or wrench=on (to sense torque)")
         self._assist = options["commands"] == "assist" or self._tools
         privileged = options["privileged"] == "on"
+        self._privileged = privileged
         offered = {channel["name"] for channel in catalogue["channels"]}
         wanted = ["proprio", *(["wrench"] if wrench else []), *(["completions"] if "completions" in offered else []),
                   *(["policy"] if privileged else [])]
@@ -374,12 +408,13 @@ class EndpointPolicy:
         notes = "\n" + Path(options["notes"]).read_text() if options["notes"] else ""
         reply = TOOLS_REPLY if self._tools else REPLY_ASSIST if self._assist else REPLY
         self._system = (prompts.body(catalogue["task"], wrench) + reply
-                        + (PRIVILEGED if privileged else "") + notes)
+                        + (PRIVILEGED if privileged else GEOMETRY if self._assist else "") + notes)
         self._messages: dict[int, list[dict]] = {}
         self._sent: dict[int, int | None] = {}  # id of the last command each environment sent
         self._target: dict[int, np.ndarray | None] = {}  # position the last pose command asked for
         self._call: dict[int, str | None] = {}  # id of the tool call the next state report answers (tools=on)
         self._skill: dict[int, skills.Skill | None] = {}  # the closed-loop skill running on each environment
+        self._geometry: dict[int, tuple | None] = {}  # head top and axis from the work order (without privilege)
         self._episode: dict[int, int] = {}  # how many episodes each environment has started
         self._unread: set[int] = set()
         self.calls: dict[int, list[dict]] = {}  # per environment, one entry per call in the episode under way
@@ -396,6 +431,7 @@ class EndpointPolicy:
             self._messages[env] = [{"role": "system", "content": self._system}, {"role": "user", "content": work_order}]
             self._sent[env], self._target[env], self._call[env], self.calls[env] = None, None, None, []
             self._skill[env] = None
+            self._geometry[env] = None if self._privileged or not self._assist else work_order_geometry(work_order)
             self._episode[env] = self._episode.get(env, -1) + 1
             self._unread.discard(env)
 
@@ -499,8 +535,24 @@ class EndpointPolicy:
         return parse_call(call, pose)
 
     def _readings(self, frame: dict, env: int) -> dict:
-        """What a skill reads each tick, from proprio and the privileged channel."""
+        """What a skill reads each tick: proprio and the privileged channel, or without privilege, proprio, the
+        work order's geometry and the wrist sensor."""
         tool, quat = _tool_pose(self._catalogue, frame, env)
+        if not self._privileged:
+            head, axis = self._geometry[env]
+            rel = head - tool
+            depth = float(rel @ axis)
+            lateral = float(np.linalg.norm(rel - depth * axis))
+            tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(-_axis(quat, 2) @ axis)))))
+            wrench = by_field(self._catalogue, "wrench")
+            row = frame["wrench"][env]
+            force_tool = np.array(row[wrench["force"]["start"] : wrench["force"]["start"] + 3], float)
+            force_base = np.column_stack([_axis(quat, k) for k in range(3)]) @ force_tool
+            return {"tool_pos": tool, "tool_quat": quat, "head": head, "axis": axis, "depth": depth,
+                    "torque_z": float(row[wrench["torque"]["start"] + 2]), "force_base": force_base,
+                    "drive": None, "installed": None,
+                    # the work order's seated condition, judged from its own geometry
+                    "engaged": depth > 0.0025 and lateral < 0.0012 and tilt < 6.0}
         fields, row = by_field(self._catalogue, "policy"), frame["policy"][env]
 
         def field(name):
@@ -549,7 +601,8 @@ class EndpointPolicy:
         texts, poses = [], [_tool_pose(self._catalogue, frame, env) if self._assist else None for env in asked]
         for env, pose in zip(asked, poses, strict=True):
             sent = None if env in prefixes else self._sent[env]  # a skill's last one-tick record says nothing
-            text = describe(self._catalogue, self._layout, frame, env, sent, pose, self._target.get(env))
+            text = describe(self._catalogue, self._layout, frame, env, sent, pose, self._target.get(env),
+                            self._geometry.get(env))
             texts.append(prefixes.get(env, "") + (UNREAD + text if env in self._unread else text))
         ticks = [int(clock[env]["tick"]) for env in asked]
         self._pool = self._pool or ThreadPoolExecutor(max_workers=len(clock))
