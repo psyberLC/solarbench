@@ -9,13 +9,13 @@
 # (default 1000), ROUNDS (default no cap), COMMANDS (pose, the default, or assist: aim/push/turn helpers),
 # PRIVILEGED (off, or on: the oracle's readings), LIMIT_S (episode limit in sim seconds, default 86400),
 # LESSONS (a text file appended to the system message, e.g. NOTES/probes/lessons_bolt.md), KEEP (on: earlier thinking
-# is sent back each round; serve with CTX=131072 and a small BUDGET).
+# is sent back each round; serve with CTX=131072 and a small BUDGET), TEMP (sampling temperature with thinking, default 1.0).
 # An agent answers through NOTES/probes/agent_bridge.py on port 8082.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT=${OUT:?set OUT to a scratch folder}
 THINKING=${1:-thinking=on}; THINKING=${THINKING#thinking=}
-if [ "$THINKING" = on ]; then SAMPLING="reasoning=on,temperature=1.0,max_tokens=12288"
+if [ "$THINKING" = on ]; then SAMPLING="reasoning=on,temperature=${TEMP:-1.0},max_tokens=12288"
 else SAMPLING="reasoning=off,temperature=0,max_tokens=1024"; fi
 mkdir -p "$OUT"
 SOLARBENCH_ENDPOINT_URL=${URL:-http://127.0.0.1:8081/v1} SOLARBENCH_ENDPOINT_LOG="$OUT/calls-${MODEL:-nemotron}-${COMMANDS:-pose}.jsonl" \

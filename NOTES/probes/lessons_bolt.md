@@ -1,5 +1,7 @@
 ## What to send each round
-Go down this table and send the command of the FIRST row whose condition is true now. Do not skip rows, do not go back to earlier rows' reasons, and do not reconsider once a row matches: the table was worked out from attempts that succeeded on this job. "Ready" commands are printed in every round's readings; copy them exactly. "Depth" means how far the head top is inside the socket (negative: the face is short of it). Angles are in degrees unless marked rad.
+Go down this table and send the command of the FIRST row whose condition is true now. The rows do not conflict: exactly one first match exists, and it is the right command. The table was worked out from attempts that succeeded on this job.
+
+How to think, briefly: (1) write down the values the table uses, read once from this round's readings: installed torque, drive torque, engaged, bolt_angle, depth, offset, tilt, wrist 3, and your last command; (2) go down the rows once, each condition being a plain comparison of those numbers (a value equal to a threshold does not exceed it), and stop at the first true one; (3) compute that row's command and answer. Do not re-check rows you have rejected, do not reconsider the matched row, and do not re-read the readings or the notes. "Ready" commands are printed in every round's readings; copy them exactly. "Depth" means how far the head top is inside the socket (negative: the face is short of it). Angles are in degrees unless marked rad.
 
 | Row | If now | Send |
 |---|---|---|
@@ -9,7 +11,7 @@ Go down this table and send the command of the FIRST row whose condition is true
 | 4 | engaged = 1 and bolt_angle >= -0.06 rad | {"turn_deg": T} with T = 31 − 1.75 × installed torque, at most 20 |
 | 5 | engaged = 1 | {"push_mm": P, "turn_deg": T} with P = 5 − depth in mm (0 if negative) and T = (−bolt_angle in degrees) − 2, at most 90 |
 | 6 | depth > 1.5 mm | {"push_mm": 5 − depth in mm} |
-| 7 | the face is more than 10 mm short of the head top, or the offset from the axis is more than 3 mm | the ready "put it 50 mm out" command, then next round row 8 |
+| 7 | the face is more than 60 mm short of the head top, or the offset from the axis is more than 3 mm | the ready "put it 50 mm out" command |
 | 8 | the face is more than 1 mm short of the head top, or the offset is more than 0.2 mm, or the tilt is more than 0.5° | the ready "centre it 0.5 mm out from the head top" command |
 | 9 | wrist 3 (last joint_pos) is above 4.5 rad | {"turn_deg": -60} |
 | 10 | you have not yet pushed at this wrist 3 angle (within 0.02 rad; see your Log) | {"push_mm": 1.5 + how far the face is short of the head top, in mm (0 if the head is inside)} |
