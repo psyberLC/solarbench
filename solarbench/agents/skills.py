@@ -30,6 +30,11 @@ PRESS_SEAT, PRESS_TURN = 0.0015, 0.007  # m past the current depth while seating
 BIAS_GAIN, BIAS_LIMIT = 0.15, 0.015  # integral of the measured offset (per tick, m)
 COMPLY = 2e-6  # m per N per tick: in contact without privilege, move with the sensed sideways force
 CONTACT = 3.0  # N pressing along the axis that counts as contact
+# Searched this far without seating, the socket is not going to drop: the hex repeats every 60 degrees, every seat in
+# the fixed-script runs that succeeded did within 3.9 s (56 degrees), and every one that had not by then ran out its
+# 10 s. On those bolts it sits about 2 mm onto the head, wedged on the corners, and turns the bolt from there
+# (NOTES/probes/bolt_engage_probe.py); tighten_to's firmer press finished seating each of them.
+SEEK_LIMIT = math.radians(75)
 
 
 def _qmul(a, b) -> np.ndarray:
@@ -71,7 +76,9 @@ DESCRIPTIONS = {
             "with the socket on the axis just off the head top, reached in two aims: first the readings' ready "
             "'put it 50 mm out' aim, then the ready 'centre it 0.5 mm out from the head top' aim. A single move "
             "straight from far away can clip the head and jam the socket on it askew, and seat cannot recover "
-            "from that. Ends when seated, or after max_s seconds.",
+            "from that. Ends when seated; or after searching through more than one turn of the hex (75 "
+            "degrees) without seating, when the socket is usually wedged partly on the head: then call tighten_to, "
+            "whose firmer press finishes seating it while it turns; or after max_s seconds.",
     "tighten_to": "Closed loop: turn the seated socket in the tightening direction, keeping it pressed on and "
                   "centred, slowing near the end, and stop as soon as the wrist's drive torque reaches torque_Nm. "
                   "The installed torque ends within about 0.1 N·m of where it stops. The job accepts 14 to 18 N·m "
@@ -109,7 +116,7 @@ class Skill:
         self.limit = float(args.get("max_s", limit))
         self.quat = aligned(readings["tool_quat"], readings["axis"])  # commanded orientation; turns accumulate
         self.bias = np.zeros(3)
-        self.turned = 0.0
+        self.turned = self.sought = 0.0  # turned in all; turned searching (seat)
         self.samples: list[tuple[float, float]] = []  # (angle the tool turned, sensed torque) while in range
         self.previous, self.measured = np.asarray(readings["tool_quat"], float), 0.0  # measured turn about tool z
         self.quiet = 0  # consecutive ticks of near-zero sensed torque (unload without privilege)
@@ -160,10 +167,15 @@ class Skill:
         if self.name == "seat":
             if r["engaged"] and depth > 0.0025:
                 return f"seated after {elapsed:.1f} s: the head is {1e3 * depth:.1f} mm inside the socket"
+            if self.sought > SEEK_LIMIT and depth > 0.0005:
+                return (f"not seated after searching {math.degrees(self.sought):.0f} degrees ({elapsed:.1f} s): the "
+                        f"socket is about {1e3 * depth:.1f} mm onto the head (2.5 mm counts as seated), likely "
+                        "wedged on the corners; tighten_to's firmer press can finish seating it")
             if elapsed > self.limit:
                 return f"not seated after {elapsed:.1f} s (turned {math.degrees(self.turned):.0f} degrees)"
             rate = -math.copysign(0.3, drive) if abs(drive) > CAUGHT else SEEK_RATE
             self.quat, self.turned = _spin(self.quat, rate * self.dt), self.turned + rate * self.dt
+            self.sought += max(rate, 0.0) * self.dt
             return self._target(r, head - (max(depth, 0.0) + PRESS_SEAT) * axis)
         if self.name == "tighten_to":
             target = float(self.args["torque_Nm"])

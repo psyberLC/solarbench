@@ -48,6 +48,20 @@ def test_seat_presses_lightly_on_the_axis_turns_slowly_and_unwinds_when_caught()
 
 
 @pytest.mark.unit
+def test_seat_on_the_head_gives_up_after_one_turn_of_the_hex_and_points_to_tighten_to():
+    skill = Skill("seat", {}, readings(), 30)
+    ticks = 0
+    while not isinstance(result := skill.step(readings(depth=0.002)), str):
+        ticks += 1
+    assert ticks == pytest.approx(math.radians(75) / 0.25 * 30, abs=1)  # about 5.2 s, not the 10 s limit
+    assert "about 2.0 mm onto the head" in result and "tighten_to" in result
+    skill = Skill("seat", {}, readings(), 30)  # still off the head: the search goes on to the limit
+    while not isinstance(result := skill.step(readings(depth=0.0)), str):
+        pass
+    assert result.startswith("not seated after 10.0 s")
+
+
+@pytest.mark.unit
 def test_seat_corrects_a_steady_offset_across_the_axis():
     skill = Skill("seat", {}, readings(), 30)
     for _ in range(20):

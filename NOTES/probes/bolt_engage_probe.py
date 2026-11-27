@@ -3,7 +3,8 @@
 Runs scripts/evaluate.py with the oracle wrapped in a policy "oracleprobe" that, every tick, records for each
 environment the bolt angle and the socket's depth over the head, lateral offset from the bolt's axis and tilt,
 as the environment computes them for its engaged stage (depth > engage_depth, lateral < engage_lateral, tilt <
-engage_angle_deg). One line per episode goes to LOG: the ticks on which the bolt turned, and those quantities on them.
+engage_angle_deg). One line per episode goes to LOG: the ticks on which the bolt turned or the oracle was seating
+(its phase 1), with those quantities, the wrist's drive torque and the oracle's phase.
   LOG=/tmp/engage.jsonl .venv/bin/python NOTES/probes/bolt_engage_probe.py \
       --task SolarBench-T3-ClampTighten-UR16e-R2-v0 --episodes 32 --num_envs 16 --viz none --split dev --out_dir /tmp/e
 """
@@ -44,11 +45,12 @@ class Probe(OraclePolicy):
         for env in range(e.num_envs):
             if self._rows.get(env) is None:
                 self._rows[env] = (int(e.episode_index[env]), [])
-            if turned[env]:
+            if turned[env] or int(self._oracle.phase[env]) == 1:
                 self._rows[env][1].append([round(float(e.episode_length_buf[env]) * e.step_dt, 3),
                                            round(float(e.theta[env]), 4), round(float(e.depth[env]) * 1e3, 2),
                                            round(float(e.lateral[env]) * 1e3, 2),
-                                           round(float(e.axis_err_deg[env]), 2), int(bool(e.engaged[env]))])
+                                           round(float(e.axis_err_deg[env]), 2), int(bool(e.engaged[env])),
+                                           round(float(e.tau[env]), 3), int(self._oracle.phase[env]), int(turned[env])])
         return super().act(obs)
 
 
