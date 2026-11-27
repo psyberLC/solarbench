@@ -60,7 +60,7 @@ This fork ([`psyberLC/solarbench`](https://github.com/psyberLC/solarbench), bran
 
 No episode was damaged.
 - **Connector fix.** Before it, a one-tick hold between skills jammed a few insertions: the script got 29/31 and Super 28/31.
-- **Bolt.** Super's bolt losses mostly came from a socket wedged about 2 mm onto the head, which `seat` reported only as "not seated". The oracle's two losses are the same wedge. `seat` now says so and points to `tighten_to`, which seats the socket; the fixed script still got 32/32 with it. Super has not been rerun on the bolt since.
+- **Bolt.** Super's bolt losses mostly came from a socket wedged about 2 mm onto the head, which `seat` reported only as "not seated". The oracle's two losses are the same wedge. `seat` now says so and points to `tighten_to`, which seats the socket; the fixed script still got 32/32 with it. A Super rerun was stopped at episode 8, which repeated its earlier failure (`retract` jammed on the head), before any wedged bolt. Super's bolt result stays 26/32, and the fix is untested with a model.
 - **Without skills.** When the model sent poses itself, Nemotron 3 Nano and 3.5 Lightning never succeeded safely on the bolt.
 
 **Read more.**

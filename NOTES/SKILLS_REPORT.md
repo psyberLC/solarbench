@@ -54,7 +54,12 @@ Super used the minimal 4 calls in every episode: 128 calls, median 106 tokens, 2
 - **Pressing harder does not seat it.** The oracle's 7 mm press while tightening left it at 2.2 mm. In the skill runs, `tighten_to`, with its firmer press and its following of the sensed sideways force, finished seating every such socket.
 - **The fix** (commits `85b526d`, `69eee67`). Every successful seat in the script runs took 3.9 s or less, that is 56 degrees of searching, less than the hex's 60-degree period. So `seat` now gives up once it has searched 75 degrees with the socket on the head. It says how far on the socket is, says it is likely wedged when that is 1.5 mm or more, and says that `tighten_to` can finish seating it. Its description says the same.
 - **Check.** The fixed script, rerun on the same 32 episodes at `85b526d` (before the wording change): **32/32 safe** (100%, 89–100), installed 14.63–15.65 N·m. The new message fired on 5 bolts (9, 16, 17, 18, 29). Bolts that had seated late before released sooner: episodes 9, 13, 16, 17 and 18 by 2.6–4.5 s, episode 29 by 1.0 s. The median release fell from 18.0 to 17.5 s. Result: [report-runs-seatcheck/](report-runs-seatcheck/).
-- **Not verified:** Super was not rerun on the bolt, so whether it now follows the message is unknown.
+- **Super rerun, stopped at episode 8.** Same setup as the 32-episode run, commit `05a7a14`. The rule was that the run stops as soon as an earlier failure repeats. Logs, with no result file because the run was stopped: [report-runs-32-seatfix/](report-runs-32-seatfix/).
+  - **Episodes 0–7:** all on the clean 6-call path, tightened to 15.6–16.0 N·m.
+  - **Episode 8:** failed as before. `tighten_to` reached its 15 s limit at 15.87 N·m. After `unload`, `retract` twice ended with the socket jammed on the head, pressing about 131 N into it. An aim and a third `retract` ran out the time without a release.
+  - **Where it was stopped:** during episode 9, the first of the wedged bolts. So the `seat` fix is still **untested with a model**.
+  - **Super's bolt rate stays the 32-episode run's 26/32 (81%, 65–91).**
+- **Not addressed by any fix:** the episode-8 failure. `tighten_to` ran slowly to its time limit and the socket then stuck on the flats. The same thing happens on the same bolt in both runs, so it is not chance.
 
 ### 3. Bolt oracle: its two losses are the same wedge (reported, not changed)
 - **What happened.** Episodes 13 and 18, the oracle's two losses, are wedged sockets. The oracle turned each bolt to 16.09 N·m from 1.9–2.2 mm on and waited for an engagement that never came. The evaluator is right not to count a socket 2 mm onto the head as engaged, so the check stays as it is.
