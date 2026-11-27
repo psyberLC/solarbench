@@ -15,6 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 parser = argparse.ArgumentParser()
 parser.add_argument("--torque", type=float, default=15.5)
 parser.add_argument("--port", type=int, default=8085)
+parser.add_argument("--plan", default="", help="comma-separated tool names without arguments, instead of the bolt plan")
 args = parser.parse_args()
 
 
@@ -24,6 +25,9 @@ def ready_aim(state: str, label: str) -> dict:
 
 
 def plan(turn: int, state: str) -> tuple[str, dict]:
+    if args.plan:
+        names = args.plan.split(",")
+        return names[min(turn, len(names) - 1)], {}
     steps = [("aim", lambda: ready_aim(state, "to put it 50 mm out")),
              ("aim", lambda: ready_aim(state, "to centre it 0.5 mm out")),
              ("seat", dict), ("tighten_to", lambda: {"torque_Nm": args.torque}), ("unload", dict),
@@ -37,7 +41,7 @@ class Handler(BaseHTTPRequestHandler):
         messages = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))["messages"]
         turn = sum(m["role"] == "assistant" for m in messages)
         state = messages[-1]["content"]
-        if "finished:" in state.split("\n", 1)[0]:
+        if "finished" in state.split("\n", 1)[0] or "stopped" in state.split("\n", 1)[0]:
             print("  result:", state.split("\n", 1)[0], flush=True)
         name, arguments = plan(turn, state)
         print(f"turn {turn + 1}: {name}({json.dumps(arguments)})", flush=True)
