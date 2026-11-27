@@ -168,9 +168,10 @@ class Skill:
             if r["engaged"] and depth > 0.0025:
                 return f"seated after {elapsed:.1f} s: the head is {1e3 * depth:.1f} mm inside the socket"
             if self.sought > SEEK_LIMIT and depth > 0.0005:
+                wedged = ", likely wedged on the corners" if depth > 0.0015 else ""
                 return (f"not seated after searching {math.degrees(self.sought):.0f} degrees ({elapsed:.1f} s): the "
-                        f"socket is about {1e3 * depth:.1f} mm onto the head (2.5 mm counts as seated), likely "
-                        "wedged on the corners; tighten_to's firmer press can finish seating it")
+                        f"socket is about {1e3 * depth:.1f} mm onto the head (2.5 mm counts as seated){wedged}; "
+                        "tighten_to's firmer press can finish seating it")
             if elapsed > self.limit:
                 return f"not seated after {elapsed:.1f} s (turned {math.degrees(self.turned):.0f} degrees)"
             rate = -math.copysign(0.3, drive) if abs(drive) > CAUGHT else SEEK_RATE
