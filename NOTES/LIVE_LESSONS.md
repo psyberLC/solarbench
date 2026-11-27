@@ -42,3 +42,5 @@ Exploratory viewer runs on the laptop, 2026-11-27, by claude-code (for psyberLC)
 - `solarbench/agents/endpoint.py`: `commands=assist`, `privileged=on`, `notes=<file>`, `keep_thinking=on`, `tools=on`.
 - `NOTES/live.sh` (viewer runs), `NOTES/serve.sh` (`MODEL`, `TOP_P`, `BUDGET`, `PARALLEL`, `CTX`), `NOTES/probes/` (proxy, agent bridge, replay, scripted seating probe, lessons files).
 - Tests: 94 pass; ruff clean. Nothing here has been reviewed by a person.
+
+The comparison runs (oracle, a fixed script and Lightning on the same 8 dev episodes of both tasks) are written up in [SKILLS_REPORT.md](SKILLS_REPORT.md).

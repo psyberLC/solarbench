@@ -1,0 +1,368 @@
+{
+ "schema_version": 1,
+ "task": "SolarBench-T2-MC4-G1-v0",
+ "policy": "phases:scripted,notes=NOTES/probes/job_mc4.md,reasoning=off",
+ "privileged": true,
+ "split": "dev",
+ "tag": "",
+ "provenance": {
+  "date": "2026-11-27T13:44:00+00:00",
+  "solarbench_git": "b99300084a9bfd01b3380f44f76c1170f1437729",
+  "solarbench_dirty": true,
+  "versions": {
+   "isaaclab": "3.0.0",
+   "newton": "1.6.1",
+   "warp-lang": "1.17.0",
+   "mujoco-warp": "3.12.0",
+   "torch": "2.11.0",
+   "ovphysx": "0.6.4.72118723"
+  },
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "python": "3.12.3",
+  "physics": "NewtonCfg",
+  "physics_dt": 0.0016666666666666668,
+  "decimation": 20,
+  "hydra_overrides": []
+ },
+ "summary": {
+  "episodes": 8,
+  "valid_episodes": 8,
+  "sim_error_rate": 0.0,
+  "stage_grasped": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "stage_unlocked": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "stage_separated": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "stage_realigned": {
+   "rate": 1.0,
+   "ci95": [
+    0.6755924316585924,
+    1.0
+   ],
+   "k": 8,
+   "n": 8
+  },
+  "stage_relatched": {
+   "rate": 0.875,
+   "ci95": [
+    0.5291118149439162,
+    0.9775825088000281
+   ],
+   "k": 7,
+   "n": 8
+  },
+  "stage_released": {
+   "rate": 0.875,
+   "ci95": [
+    0.5291118149439162,
+    0.9775825088000281
+   ],
+   "k": 7,
+   "n": 8
+  },
+  "success": {
+   "rate": 0.875,
+   "ci95": [
+    0.5291118149439162,
+    0.9775825088000281
+   ],
+   "k": 7,
+   "n": 8
+  },
+  "safe_success": {
+   "rate": 0.875,
+   "ci95": [
+    0.5291118149439162,
+    0.9775825088000281
+   ],
+   "k": 7,
+   "n": 8
+  },
+  "damage": {
+   "rate": 0.0,
+   "ci95": [
+    0.0,
+    0.3244075683414076
+   ],
+   "k": 0,
+   "n": 8
+  },
+  "time_to_success_s": {
+   "mean": 6.452380952380952,
+   "lo": 5.457142857142857,
+   "hi": 7.6000000000000005
+  },
+  "peak_push_force_N": {
+   "mean": 151.43453311920166,
+   "lo": 123.42947101593018,
+   "hi": 183.89675426483154,
+   "max": 241.73184204101562
+  },
+  "peak_hand_force_N": {
+   "mean": 117.39979267120361,
+   "lo": 85.0990161895752,
+   "hi": 147.40393257141113,
+   "max": 169.7213897705078
+  },
+  "peak_cable_tension_N": {
+   "mean": 0.8914406001567841,
+   "lo": 0.0,
+   "hi": 2.0810656547546387,
+   "max": 4.162131309509277
+  },
+  "vel_limit_violation_steps": {
+   "mean": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "max": 0
+  }
+ },
+ "episodes": [
+  {
+   "t_grasped": 1.433333396911621,
+   "t_unlocked": 2.1666667461395264,
+   "t_separated": 2.6000001430511475,
+   "t_realigned": 4.1666669845581055,
+   "t_relatched": 4.366666793823242,
+   "t_released": 5.133333683013916,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": true,
+   "stage_released": true,
+   "env_id": 0,
+   "episode": 0,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": true,
+   "peak_hand_force_N": 81.14913177490234,
+   "peak_push_force_N": 241.73184204101562,
+   "peak_cable_tension_N": 0.0,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 47.739234924316406,
+   "duration_s": 5.133333333333333
+  },
+  {
+   "t_grasped": 1.4000000953674316,
+   "t_unlocked": 2.133333444595337,
+   "t_separated": 2.5333335399627686,
+   "t_realigned": 4.133333683013916,
+   "t_relatched": 9.500000953674316,
+   "t_released": 9.533333778381348,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": true,
+   "stage_released": true,
+   "env_id": 0,
+   "episode": 1,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": true,
+   "peak_hand_force_N": 167.99026489257812,
+   "peak_push_force_N": 168.93450927734375,
+   "peak_cable_tension_N": 2.969393491744995,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 52.794776916503906,
+   "duration_s": 9.533333333333333
+  },
+  {
+   "t_grasped": 1.4000000953674316,
+   "t_unlocked": 2.133333444595337,
+   "t_separated": 2.5333335399627686,
+   "t_realigned": 4.1666669845581055,
+   "t_relatched": 4.333333492279053,
+   "t_released": 5.100000381469727,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": true,
+   "stage_released": true,
+   "env_id": 0,
+   "episode": 2,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": true,
+   "peak_hand_force_N": 44.19721603393555,
+   "peak_push_force_N": 108.6471939086914,
+   "peak_cable_tension_N": 0.0,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 36.61648178100586,
+   "duration_s": 5.1
+  },
+  {
+   "t_grasped": 1.4000000953674316,
+   "t_unlocked": 2.133333444595337,
+   "t_separated": 2.5333335399627686,
+   "t_realigned": 4.1666669845581055,
+   "t_relatched": 6.100000381469727,
+   "t_released": 6.933333873748779,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": true,
+   "stage_released": true,
+   "env_id": 0,
+   "episode": 3,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": true,
+   "peak_hand_force_N": 130.74557495117188,
+   "peak_push_force_N": 136.4424591064453,
+   "peak_cable_tension_N": 0.0,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 52.899452209472656,
+   "duration_s": 6.933333333333334
+  },
+  {
+   "t_grasped": 1.4000000953674316,
+   "t_unlocked": 2.133333444595337,
+   "t_separated": 2.5333335399627686,
+   "t_realigned": 4.1666669845581055,
+   "t_relatched": 6.133333683013916,
+   "t_released": 6.266666889190674,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": true,
+   "stage_released": true,
+   "env_id": 0,
+   "episode": 4,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": true,
+   "peak_hand_force_N": 132.7792510986328,
+   "peak_push_force_N": 136.7857208251953,
+   "peak_cable_tension_N": 0.0,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 52.66143798828125,
+   "duration_s": 6.266666666666667
+  },
+  {
+   "t_grasped": 1.4000000953674316,
+   "t_unlocked": 2.133333444595337,
+   "t_separated": 2.5333335399627686,
+   "t_realigned": 4.1666669845581055,
+   "t_relatched": 6.133333683013916,
+   "t_released": 6.933333873748779,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": true,
+   "stage_released": true,
+   "env_id": 0,
+   "episode": 5,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": true,
+   "peak_hand_force_N": 148.8161163330078,
+   "peak_push_force_N": 162.67657470703125,
+   "peak_cable_tension_N": 0.0,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 42.642723083496094,
+   "duration_s": 6.933333333333334
+  },
+  {
+   "t_grasped": 1.433333396911621,
+   "t_unlocked": 2.1666667461395264,
+   "t_separated": 2.6000001430511475,
+   "t_realigned": 4.133333683013916,
+   "t_relatched": 4.5,
+   "t_released": 5.266666889190674,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": true,
+   "stage_released": true,
+   "env_id": 0,
+   "episode": 6,
+   "sim_error": false,
+   "success": true,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": true,
+   "peak_hand_force_N": 63.79939651489258,
+   "peak_push_force_N": 84.99945068359375,
+   "peak_cable_tension_N": 0.0,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 43.24184799194336,
+   "duration_s": 5.266666666666667
+  },
+  {
+   "t_grasped": 1.4000000953674316,
+   "t_unlocked": 2.133333444595337,
+   "t_separated": 2.5333335399627686,
+   "t_realigned": 4.133333683013916,
+   "t_relatched": -1.0,
+   "t_released": -1.0,
+   "stage_grasped": true,
+   "stage_unlocked": true,
+   "stage_separated": true,
+   "stage_realigned": true,
+   "stage_relatched": false,
+   "stage_released": false,
+   "env_id": 0,
+   "episode": 7,
+   "sim_error": false,
+   "success": false,
+   "damage": false,
+   "latch_broken": false,
+   "cable_overpull": false,
+   "safe_success": false,
+   "peak_hand_force_N": 169.7213897705078,
+   "peak_push_force_N": 171.25851440429688,
+   "peak_cable_tension_N": 4.162131309509277,
+   "vel_limit_violation_steps": 0,
+   "insertion_force_N": 35.7772216796875,
+   "duration_s": 23.966666666666665
+  }
+ ]
+}
