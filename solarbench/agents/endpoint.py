@@ -124,7 +124,8 @@ def _vector(n: int, what: str) -> dict:
 
 TOOLS = [
     _tool("aim", "Put the centre of the socket's open face at a point, with the open face pointing along a direction, "
-          "both in the base frame. The tool turns as little as it can to get there.",
+          "both in the base frame. The tool turns as little as it can to get there, in a straight line: from far "
+          "away, stop 50 mm out on the bolt's axis first (the readings' ready aim) before closing in on the head.",
           aim=_vector(3, "the point [x, y, z] in metres"),
           socket_toward=_vector(3, "the direction tool z points; need not be a unit vector")),
     _tool("push", "Move the tool straight along the way the socket points, keeping its orientation. Negative moves "

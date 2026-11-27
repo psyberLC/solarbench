@@ -68,9 +68,10 @@ def aligned(q, axis) -> np.ndarray:
 DESCRIPTIONS = {
     "seat": "Closed loop: keep the socket centred on the bolt's axis, press lightly and turn slowly until the hex "
             "flats line up and the socket drops onto the head (engaged), unwinding if a corner catches. Start "
-            "with the socket on the axis just off the head top: first send the readings' ready 'centre it 0.5 "
-            "mm out from the head top' aim (from far away a straight move can clip the head). Ends when seated, "
-            "or after max_s seconds.",
+            "with the socket on the axis just off the head top, reached in two aims: first the readings' ready "
+            "'put it 50 mm out' aim, then the ready 'centre it 0.5 mm out from the head top' aim. A single move "
+            "straight from far away can clip the head and jam the socket on it askew, and seat cannot recover "
+            "from that. Ends when seated, or after max_s seconds.",
     "tighten_to": "Closed loop: turn the seated socket in the tightening direction, keeping it pressed on and "
                   "centred, slowing near the end, and stop as soon as the wrist's drive torque reaches torque_Nm. "
                   "The installed torque ends within about 0.1 N·m of where it stops. The job accepts 14 to 18 N·m "
