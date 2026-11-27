@@ -78,14 +78,15 @@ def test_unload_and_retract_end_on_their_conditions():
 
 
 @pytest.mark.unit
-def test_a_skill_runs_between_model_calls_and_reports_back_as_the_calls_result(server):  # noqa: F811
+def test_a_skill_runs_between_model_calls_and_reports_back_as_the_calls_result(server, tmp_path):  # noqa: F811
     seen, replies, _ = server
     catalogue = json.loads(json.dumps(CATALOGUE))
     catalogue["channels"][1] = {"id": 2, "name": "proprio", "dtype": "f4", "shape": [7], "fields": [
         {"name": "tool_pos", "start": 0, "count": 3, "unit": "m"},
         {"name": "tool_quat", "start": 3, "count": 4, "unit": "xyzw"}]}
     catalogue["channels"][4]["fields"] = PRIVILEGED_FIELDS
-    policy, _ = make_policy("endpoint:m,tools=on,privileged=on,skills=on", catalogue, None)
+    log = tmp_path / "calls.jsonl"
+    policy, _ = make_policy(f"endpoint:m,tools=on,privileged=on,skills=on,log={log}", catalogue, None)
     policy.reset(torch.arange(1), ["work order"])
 
     def obs(tick, depth, engaged):
@@ -109,3 +110,4 @@ def test_a_skill_runs_between_model_calls_and_reports_back_as_the_calls_result(s
     result = seen[1]["messages"][-1]
     assert result["role"] == "tool" and result["tool_call_id"] == "s1" and result["content"].startswith("seat finished")
     assert {t["function"]["name"] for t in seen[0]["tools"]} >= {"seat", "tighten_to", "unload", "retract", "aim"}
+    assert json.loads(log.read_text().splitlines()[0])["command"] == ["skill", "seat", {}]  # a skill call is logged

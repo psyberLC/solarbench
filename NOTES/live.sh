@@ -22,6 +22,6 @@ if [ "$THINKING" = on ]; then SAMPLING="reasoning=on,temperature=${TEMP:-1.0},ma
 else SAMPLING="reasoning=off,temperature=0,max_tokens=1024"; fi
 mkdir -p "$OUT"
 SOLARBENCH_ENDPOINT_URL=${URL:-http://127.0.0.1:8081/v1} SOLARBENCH_ENDPOINT_LOG="$OUT/calls-${MODEL:-nemotron}-${COMMANDS:-pose}.jsonl" \
-    exec .venv/bin/python scripts/evaluate.py --task SolarBench-T3-ClampTighten-UR16e-R2-v0 \
+    .venv/bin/python scripts/evaluate.py --task SolarBench-T3-ClampTighten-UR16e-R2-v0 \
     --policy "endpoint:${MODEL:-NVIDIA-Nemotron-3-Nano-30B-A3B-Q4_K_M},wrench=on,$SAMPLING,rounds=${ROUNDS:-1000000},commands=${COMMANDS:-pose},privileged=${PRIVILEGED:-off}${LESSONS:+,notes=$LESSONS}${KEEP:+,keep_thinking=$KEEP}${TOOLS:+,tools=$TOOLS}${HOST:+,host=$HOST}${SKILLS:+,skills=$SKILLS}" \
     --split dev --episodes "${EPISODES:-1000}" --num_envs 1 --viz newton_gl --out_dir "$OUT" env.episode_length_s="${LIMIT_S:-86400}"

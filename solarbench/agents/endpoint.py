@@ -517,7 +517,8 @@ class EndpointPolicy:
             return
         line = {"env": env, "episode_on_env": self._episode[env], "round": len(self.calls[env]), "tick": tick,
                 **call, "reply": reply, "reasoning_chars": len(thought), "reasoning": thought,
-                "command": None if command is None else [command[0], [round(x, 5) for x in command[1]]]}
+                "command": None if command is None else list(command) if command[0] == "skill"
+                else [command[0], [round(x, 5) for x in command[1]]]}
         with self._log_lock, open(self._log, "a") as f:  # requests for several environments end at once
             f.write(json.dumps(line) + "\n")
 
